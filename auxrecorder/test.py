@@ -28,9 +28,14 @@ args = parser.parse_args()
 
 print("\nTesting auxrecorder:")
 Aux = auxrec.LvdAuxRecorder(args.filepath)
+fo,ifi = Aux._calculate_frames()
 
-# plt.subplot(111)
-# plt.plot(auxvar)
-# plt.show()
+plt.subplot(111)
+plt.plot(Aux.raw_channel(nr=3)[:100000])
+for f in fo:
+    plt.plot(f,1,'or')
+    if f > 100000:
+        break
+plt.show()
 
 print("\nDone testing\n")

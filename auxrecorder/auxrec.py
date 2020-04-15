@@ -16,21 +16,6 @@ import numpy as np
 
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
-# Functions
-
-def get_channels(auxdata, channels):
-    """ Processes aux data into -per imaging frame- values """
-    channel_data = {}
-    for ch,nr in channels.items():
-        channel_data[ch] = auxdata[:,nr]
-    return channel_data
-
-def process_channels(auxdata, setup, nstimuli=None, darkframevalue=0.5, stimvalues=(1,5)):
-    """ Processes aux data into -per imaging frame- values """
-    pass
-
-
-#<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 # Classes
 
 class LvdAuxRecorder(object):
@@ -51,7 +36,7 @@ class LvdAuxRecorder(object):
 
     """
 
-    def __init__(self, filepath, filename=None, auxsettingsfile=None):
+    def __init__(self, filepath=".", filename=None, auxsettingsfile=None):
         """ Initializes the class and loads and processes all auxdata
             Inputs:
             - filepath: Path to where the .lvd file is located
@@ -91,10 +76,57 @@ class LvdAuxRecorder(object):
             self._n = int(auxdata.shape[0]/self._nchan)
             self._auxdata = np.reshape(auxdata,(self._n,self._nchan))
 
+        # Process aux channels
+        self._frames, self._ifi = self._calculate_frames()
+
         print("AuxData file {} from {}".format( self._auxfilename,self._datetime) )
         print("* Channel settings: {}".format(auxsettingsfile))
         print("* {} channels, {} datapoints, samplingfreq={}, max input = {} V".format( self._nchan, self._n, self._sf, self._maxV ))
 
     # Shutter
-    def _process_shutter(self):
+    @property
+    def shutter(self):
+        """ Returns the frame during which the shutter opened and closed """
         pass
+
+    def raw_channel(self,nr=0):
+        """ returns the raw channel data, by channel number """
+        return self._auxdata[:,nr]
+
+
+    def _calculate_frames(self):
+        """ calculates the aux samples that correspond with the imaging frame onsets """
+        # Get channel info
+        framechannelnr = self._channelsettings["frame"]["nr"]
+        channelmin = self._channelsettings["frame"]["range"][0]
+        channelmax = self._channelsettings["frame"]["range"][1]
+
+        # Threshold the frames at the middle value
+        channeldata = self._auxdata[:,3]
+        channeldata = (channeldata-channelmin) / (channelmax-channelmin)
+
+        # Find and return the frame onsets
+        channeldata = np.diff((channeldata > 0.5) * 1.0) > 0
+        frameonsets = np.argwhere(channeldata)
+        ifi = np.round(np.mean(frameonsets[1:]-frameonsets[:-1]))
+        print("ifi={}".format(ifi))
+        return frameonsets, ifi
+
+
+    def _process_channel(self,channelname):
+        """ cleans up the random electrical noise in the channels """
+
+        channelnr = self._channelsettings[channelname]["nr"]
+        print("channelnr = {}".format(channelnr))
+        channelmin = self._channelsettings[channelname]["range"][0]
+        print("channelmin = {}".format(channelmin))
+        channelmax = self._channelsettings[channelname]["range"][1]
+        print("channelmax = {}".format(channelmax))
+        channelnval = self._channelsettings[channelname]["nvalues"]
+        print("channelnval = {}".format(channelnval))
+
+        channeldata = self._auxdata[:,channelnr]
+        channeldata = (channeldata-channelmin) / (channelmax-channelmin)
+        channeldata = np.round(channeldata * (channelnval-1))
+
+        return channeldata
