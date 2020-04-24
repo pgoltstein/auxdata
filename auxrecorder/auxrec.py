@@ -52,11 +52,13 @@ class LvdAuxRecorder(object):
 
         # Get settings
         if auxsettingsfile is None:
-            auxsettingsfile = os.path.join(os.getcwd(),"default.auxsettings.py")
+            self_path = os.path.dirname(os.path.realpath(__file__))
+            auxsettingsfile = os.path.join(self_path,"default.auxsettings.py")
         settings = {}
         with open(auxsettingsfile) as f:
             exec(f.read(), settings)
             self._channelsettings = settings["auxchannels"]
+        self._auxsettingsfile = auxsettingsfile
 
         # Open the aux file for reading
         with open(self._auxfile, 'rb') as f:
@@ -77,24 +79,31 @@ class LvdAuxRecorder(object):
             self._auxdata = np.reshape(auxdata,(self._n,self._nchan))
 
         # Process aux channels
-        self._frames, self._ifi = self._calculate_frames()
+        self._imframes, self._imifi = self._calculate_imaging_frames()
 
-        print("AuxData file {} from {}".format( self._auxfilename,self._datetime) )
-        print("* Channel settings: {}".format(auxsettingsfile))
-        print("* {} channels, {} datapoints, samplingfreq={}, max input = {} V".format( self._nchan, self._n, self._sf, self._maxV ))
 
-    # Shutter
+    # properties
+    def __str__(self):
+        """ Returns a printable string with summary output """
+        return "AuxData file {} from {}\n* Channel settings: {}\n* {} channels, {} datapoints, samplingfreq={}Hz, max input={}V".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV )
+
     @property
-    def shutter(self):
-        """ Returns the frame during which the shutter opened and closed """
-        pass
+    def imagingifi(self):
+        """ Returns the real inter frame interval of the imaging stack """
+        return self._imifi
 
+    @property
+    def imagingsf(self):
+        """ Returns the real sampling frequency of the imaging stack """
+        return 1/self._imifi
+
+    # Methods
     def raw_channel(self,nr=0):
         """ returns the raw channel data, by channel number """
         return self._auxdata[:,nr]
 
-
-    def _calculate_frames(self):
+    # Internal methods
+    def _calculate_imaging_frames(self):
         """ calculates the aux samples that correspond with the imaging frame onsets """
         # Get channel info
         framechannelnr = self._channelsettings["frame"]["nr"]
@@ -108,10 +117,9 @@ class LvdAuxRecorder(object):
         # Find and return the frame onsets
         channeldata = np.diff((channeldata > 0.5) * 1.0) > 0
         frameonsets = np.argwhere(channeldata)
-        ifi = np.round(np.mean(frameonsets[1:]-frameonsets[:-1]))
-        print("ifi={}".format(ifi))
+        ifi_samples = np.round(np.mean(frameonsets[1:]-frameonsets[:-1]))
+        ifi = ifi_samples / self._sf
         return frameonsets, ifi
-
 
     def _process_channel(self,channelname):
         """ cleans up the random electrical noise in the channels """
