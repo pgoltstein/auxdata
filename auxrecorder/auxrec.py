@@ -53,7 +53,7 @@ class LvdAuxRecorder(object):
         # Get settings
         if auxsettingsfile is None:
             self_path = os.path.dirname(os.path.realpath(__file__))
-            settings_path = os.path.join( self_path.split(os.path.sep)[:-1].join(os.path.sep), "settings" )
+            settings_path = os.path.join( os.path.sep.join(  self_path.split(os.path.sep)[:-1] ), "settings" )
             auxsettingsfile = os.path.join( settings_path, "default.auxsettings.py" )
         settings = {}
         with open(auxsettingsfile) as f:
