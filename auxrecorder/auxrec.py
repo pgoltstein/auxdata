@@ -13,7 +13,7 @@ Created on Tue Jan 28, 2020
 import os, glob
 import datetime
 import numpy as np
-
+from scipy import stats as scistats
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 # Classes
@@ -59,6 +59,7 @@ class LvdAuxRecorder(object):
         with open(auxsettingsfile) as f:
             exec(f.read(), settings)
             self._channelsettings = settings["auxchannels"]
+            self._processingsettings = settings["auxprocessing"]
         self._auxsettingsfile = auxsettingsfile
 
         # Open the aux file for reading
@@ -81,6 +82,7 @@ class LvdAuxRecorder(object):
 
         # Process aux channels
         self._imframes, self._imifi = self._calculate_imaging_frames()
+        self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
 
 
     # properties
@@ -98,44 +100,80 @@ class LvdAuxRecorder(object):
         """ Returns the real sampling frequency of the imaging stack """
         return 1/self._imifi
 
+    @property
+    def darkframes(self):
+        """ Returns the onset and offset of the darkframes """
+        return self._darkfr_on, self._darkfr_off
+
+    @property
+    def dataonsetframe(self):
+        """ Returns the onset frame of the clean imaging period """
+        return self._dataonsetframe
+
     # Methods
     def raw_channel(self,nr=0):
         """ returns the raw channel data, by channel number """
         return self._auxdata[:,nr]
 
     # Internal methods
+    def _calculate_darkframes_dataonset(self):
+        """ Calculates the onset and offset of the darkframes and the data onset frame """
+        # Get channel info
+        darkframeschannelname = self._processingsettings["darkframes"]["channel"]
+        channelthreshold = self._processingsettings["darkframes"]["threshold"]
+        channelresolution = self._processingsettings["darkframes"]["resolution"]
+        channelvalue = self._processingsettings["darkframes"]["value"]
+
+        # Get clean channel signal
+        cleaned_channel = self._clean_channel( darkframeschannelname, channelthreshold, channelresolution )
+
+        # Find onset in aux channel
+        df_onset = np.argwhere( np.diff((cleaned_channel==channelvalue) * 1.0) > 0 ) + 1 # +1 compensates shift introduced by np.diff
+        df_offset = np.argwhere( np.diff((cleaned_channel!=channelvalue) * 1.0) > 0 ) + 1 # +1 compensates shift introduced by np.diff
+
+        # Convert to frames
+        df_onset_fr = np.argmin( np.abs(self._imframes - df_onset[0]) )
+        df_offset_fr = np.argmin( np.abs(self._imframes - df_offset[0]) )
+        dataonset = np.ceil( df_offset_fr + self.imagingsf )
+
+        # Return dark frame onset, offset, dataonset
+        return df_onset_fr, df_offset_fr, dataonset
+
     def _calculate_imaging_frames(self):
         """ calculates the aux samples that correspond with the imaging frame onsets """
         # Get channel info
-        framechannelnr = self._channelsettings["frame"]["nr"]
-        channelmin = self._channelsettings["frame"]["range"][0]
-        channelmax = self._channelsettings["frame"]["range"][1]
+        framecountchannelname = self._processingsettings["framecounts"]["channel"]
+        framecountchannelnr = self._channelsettings[framecountchannelname]["nr"]
+        channelthreshold = self._processingsettings["framecounts"]["threshold"]
 
-        # Threshold the frames at the middle value
-        channeldata = self._auxdata[:,3]
-        channeldata = (channeldata-channelmin) / (channelmax-channelmin)
+        # Threshold the frames
+        channeldata = self._auxdata[:,framecountchannelnr]
+        channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
 
         # Find and return the frame onsets
-        channeldata = np.diff((channeldata > 0.5) * 1.0) > 0
-        frameonsets = np.argwhere(channeldata)
+        frameonsets = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
         ifi_samples = np.round(np.mean(frameonsets[1:]-frameonsets[:-1]))
         ifi = ifi_samples / self._sf
         return frameonsets, ifi
 
-    def _process_channel(self,channelname):
-        """ cleans up the random electrical noise in the channels """
-
+    def _clean_channel(self, channelname, threshold, resolution):
+        """ cleans up the random electrical noise in channel """
+        # Get channel data
         channelnr = self._channelsettings[channelname]["nr"]
-        print("channelnr = {}".format(channelnr))
-        channelmin = self._channelsettings[channelname]["range"][0]
-        print("channelmin = {}".format(channelmin))
-        channelmax = self._channelsettings[channelname]["range"][1]
-        print("channelmax = {}".format(channelmax))
-        channelnval = self._channelsettings[channelname]["nvalues"]
-        print("channelnval = {}".format(channelnval))
-
         channeldata = self._auxdata[:,channelnr]
-        channeldata = (channeldata-channelmin) / (channelmax-channelmin)
-        channeldata = np.round(channeldata * (channelnval-1))
 
-        return channeldata
+        # Threshold the channel, find 'events'
+        channel_up = np.argwhere(np.diff((channeldata > threshold) * 1.0) > 0)
+        channel_down = np.argwhere(np.diff((channeldata < threshold) * 1.0) > 0)
+        channel_up += 1 # Because of the np.diff above, the frames shifted by 1
+        channel_down += 1
+
+        # Loop over events, set to channel value
+        cleaneddata = np.zeros_like(channeldata)
+        for on,off in zip(channel_up.ravel(),channel_down.ravel()):
+            cleanedvalues =  np.round( channeldata[on:off] / resolution )
+            values,counts = np.unique(cleanedvalues, return_counts=True)
+            cleaneddata[on:off] = values[np.argmax(counts)] * resolution
+
+        # Return cleaned channel
+        return cleaneddata
