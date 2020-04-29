@@ -150,7 +150,7 @@ class LvdAuxRecorder(object):
         dataonset = np.ceil( df_offset_fr + self.imagingsf )
 
         # Return dark frame onset, offset, dataonset; add/subtract 1 for safety
-        return df_onset_fr+1, df_offset_fr-1, dataonset+1
+        return int(df_onset_fr+1), int(df_offset_fr-1), int(dataonset+1)
 
     def _calculate_imaging_frames(self):
         """ calculates the aux samples that correspond with the imaging frame onsets """
