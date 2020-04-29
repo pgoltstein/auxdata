@@ -36,19 +36,22 @@ class LvdAuxRecorder(object):
 
     """
 
-    def __init__(self, filepath=".", filename=None, auxsettingsfile=None):
+    def __init__(self, filepath=".", filename=None, auxsettingsfile=None, nimagingplanes=1):
         """ Initializes the class and loads and processes all auxdata
             Inputs:
             - filepath: Path to where the .lvd file is located
             - filename: Optional exact filename
             - auxsettingsfile: Optional filename holding the auxdata metadata such as the channel specifications (otherwise loaded from the file "default.auxsettings.py")
+            - nimagingplanes: Number of multilevel planes of imaging stack
         """
         super(LvdAuxRecorder, self).__init__()
 
-        # Get filename
+        # Get filename and store inputs
         if filename is None: filename = "*.lvd"
         self._auxfile = glob.glob( os.path.join(filepath,filename) )[0]
         self._auxfilename = self._auxfile.split(os.path.sep)[-1]
+        self._nimagingplanes = nimagingplanes
+        self._imagingplane = 0
 
         # Get settings
         if auxsettingsfile is None:
@@ -110,6 +113,16 @@ class LvdAuxRecorder(object):
         """ Returns the onset frame of the clean imaging period """
         return self._dataonsetframe
 
+    @property
+    def imagingplane(self):
+        """ Returns the currently selected image plane (relevant for exact frame timing) """
+        return self._imagingplane
+
+    @imagingplane.setter
+    def imagingplane(self,imagingplane_nr):
+        """ Sets the imaging plane (relevant for exact frame timing) """
+        self._imagingplane = int(imagingplane_nr)
+
     # Methods
     def raw_channel(self,nr=0):
         """ returns the raw channel data, by channel number """
@@ -136,8 +149,8 @@ class LvdAuxRecorder(object):
         df_offset_fr = np.argmin( np.abs(self._imframes - df_offset[0]) )
         dataonset = np.ceil( df_offset_fr + self.imagingsf )
 
-        # Return dark frame onset, offset, dataonset
-        return df_onset_fr, df_offset_fr, dataonset
+        # Return dark frame onset, offset, dataonset; add/subtract 1 for safety
+        return df_onset_fr+1, df_offset_fr-1, dataonset+1
 
     def _calculate_imaging_frames(self):
         """ calculates the aux samples that correspond with the imaging frame onsets """
@@ -150,8 +163,14 @@ class LvdAuxRecorder(object):
         channeldata = self._auxdata[:,framecountchannelnr]
         channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
 
-        # Find and return the frame onsets
+        # Find the frame onsets
         frameonsets = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
+
+        # Adjust for multilevel (fast piezo) stacks
+        if self._nimagingplanes > 1:
+            frameonsets = frameonsets[self.imagingplane::self._nimagingplanes]
+
+        # Get inter frame interval and return data
         ifi_samples = np.round(np.mean(frameonsets[1:]-frameonsets[:-1]))
         ifi = ifi_samples / self._sf
         return frameonsets, ifi
