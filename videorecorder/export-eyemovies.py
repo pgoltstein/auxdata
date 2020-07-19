@@ -77,7 +77,7 @@ def export_eye_movie( filepath, eyemovie_filename, target_filename):
     # Load eye movie
     Eye = vidrec.EyeRecording(filepath, filename=eyemovie_filename, verbose=True)
     print(Eye)
-    eyemovie = Eye[500:1000]
+    eyemovie = Eye[:]
 
     # Create video file object
     video_file_name = os.path.join(filepath,target_filename)
