@@ -13,7 +13,7 @@ Created on Fri July 17, 2020
 import os, glob
 import datetime
 import numpy as np
-#from tqdm import tqdm
+from tqdm import tqdm
 
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
@@ -23,9 +23,10 @@ class EyeRecording(object):
     """ Loads and represents eye movie data.
     """
 
-    def __init__(self, filepath=".", eyeid=1, verbose=True):
+    def __init__(self, filepath=".", eyeid=1, filename=None, verbose=True):
         """ - filepath: Path to where the eye movie videofiles are located
             - eyeid: 1, 2 (for eye1, eye2)
+            - filename: Exact name of the file, overwrites eyeid
         """
 
         # Find and load movie file
@@ -34,7 +35,8 @@ class EyeRecording(object):
         # Get filename and store inputs
         if filepath[-1] == '"':
             filepath = filepath[:-1]
-        filename = "*.eye" + str(int(eyeid))
+        if filename is None:
+            filename = "*.eye" + str(int(eyeid))
         print(os.path.join(filepath,filename))
         self._eyefile = glob.glob( os.path.join(filepath,filename) )[0]
         self._eyefilename = self._eyefile.split(os.path.sep)[-1]
