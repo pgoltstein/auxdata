@@ -37,7 +37,7 @@ class EyeRecording(object):
             filepath = filepath[:-1]
         if filename is None:
             filename = "*.eye" + str(int(eyeid))
-        print(os.path.join(filepath,filename))
+
         self._eyefile = glob.glob( os.path.join(filepath,filename) )[0]
         self._eyefilename = self._eyefile.split(os.path.sep)[-1]
         self._verbose = verbose
@@ -62,7 +62,7 @@ class EyeRecording(object):
     # properties
     def __str__(self):
         """ Returns a printable string with summary output """
-        return "EyeRecording: {}\n* {} frames, {} x {} pixels".format( self._eyefilename, self.nframes, self.yres, self.xres )
+        return "EyeRecording: {}\n* {} frames, {} x {} pixels".format( self._eyefile, self.nframes, self.yres, self.xres )
 
     @property
     def xres(self):
@@ -96,22 +96,11 @@ class EyeRecording(object):
         else:
             frames = np.array([indices,])
         frames = frames.astype((np.int64))
-        print(type(frames))
-        print(frames.dtype)
 
         frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
-        print(frame_step)
-        print(type(frame_step))
-        # print(frame_step.dtype)
         frame_size = self.xres*self.yres
-        print(frame_size)
-        print(type(frame_size))
-        # print(frame_size.dtype)
         frame_ixs = (frames * frame_step) + (self._metadata_size*8)
         n_frame_ixs = len(frame_ixs)
-        print(type(frame_ixs))
-        print(frame_ixs.dtype)
-        print(frame_ixs[-1])
 
         # Check if continuous block of frames
         moviedata = np.zeros((self.yres,self.xres,n_frame_ixs),dtype=np.uint8)

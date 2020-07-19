@@ -45,12 +45,14 @@ elif "win" in _platform.lower():
 
 parser = argparse.ArgumentParser( description = "This script finds eyemovies in the supplied directory and converts them to a platform compatible video file.\n (written by Pieter Goltstein - July 2020)")
 parser.add_argument('filepath', type=str, help= 'path to the folder holding the .eye1 and .eye2 files')
+parser.add_argument('-o', '--overwrite',  action="store_true", default=False, help='Enables to overwrite existing files')
 args = parser.parse_args()
 
 # process arguments
 filepath = args.filepath
 if filepath[-1] == '"':
     filepath = filepath[:-1]
+overwrite_old_files = args.overwrite
 
 
 # =============================================================================
@@ -70,21 +72,33 @@ def find_eye_files(path):
         video_target_filenames.append(target_name)
     return eye_source_filenames, video_target_filenames
 
-def export_eye_movie( filepath, eyemovie_filename, target_filename):
+def export_eye_movie( filepath, eyemovie_filename, target_filename, overwrite_existing=False):
     """ Loads the eyemovie and saves to target video
     """
 
-    # Load eye movie
+    # Open eye movie
     Eye = vidrec.EyeRecording(filepath, filename=eyemovie_filename, verbose=True)
     print(Eye)
+
+    # Check if old target file is present
+    target_video_file_name = os.path.join(filepath,target_filename)
+    if os.path.isfile(target_video_file_name):
+        if overwrite_existing:
+            print("Deleting old file: {}".format(target_video_file_name))
+            os.remove(target_video_file_name)
+        else:
+            print("Skipping because target file is already present:\n {}\n".format(target_video_file_name))
+            return None
+
+    # Load eye movie data
     eyemovie = Eye[:]
 
     # Create video file object
-    video_file_name = os.path.join(filepath,target_filename)
     fourcc = cv2.VideoWriter_fourcc(*codec)
-    video_object = cv2.VideoWriter( video_file_name, fourcc, 30.0, (Eye.xres,Eye.yres) )
+    video_object = cv2.VideoWriter( target_video_file_name, fourcc, 30.0, (Eye.xres,Eye.yres) )
 
     # Write movie
+    print("Target file: {}".format(eye_target))
     with tqdm(total=eyemovie.shape[2], desc="Writing", unit="Fr") as bar:
         for fr in range(eyemovie.shape[2]):
             frame = eyemovie[:,:,fr]
@@ -104,11 +118,10 @@ eye_source_filenames,video_target_filenames = find_eye_files(filepath)
 # Loop files
 for eye_source,eye_target in zip(eye_source_filenames,video_target_filenames):
 
-    print("\n\n--- {} ---".format(eye_source))
-    print("Target: {}\n".format(eye_target))
+    print("\n--- exporting eye-movie ---".format(eye_source))
 
     # Read eyemovie and write video
-    export_eye_movie( filepath, eye_source, eye_target)
+    export_eye_movie( filepath, eye_source, eye_target, overwrite_existing=overwrite_old_files)
 
 
 
