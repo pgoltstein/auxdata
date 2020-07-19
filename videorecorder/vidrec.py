@@ -95,6 +95,7 @@ class EyeRecording(object):
             frames = np.array(indices)
         else:
             frames = np.array([indices,])
+        frames = frames.astype((np.int64))
         print(type(frames))
         print(frames.dtype)
 
