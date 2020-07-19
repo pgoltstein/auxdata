@@ -13,7 +13,7 @@ Created on Fri July 17, 2020
 import os, glob
 import datetime
 import numpy as np
-from tqdm import tqdm
+#from tqdm import tqdm
 
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
@@ -32,7 +32,10 @@ class EyeRecording(object):
         super(EyeRecording, self).__init__()
 
         # Get filename and store inputs
+        if filepath[-1] == '"':
+            filepath = filepath[:-1]
         filename = "*.eye" + str(int(eyeid))
+        print(os.path.join(filepath,filename))
         self._eyefile = glob.glob( os.path.join(filepath,filename) )[0]
         self._eyefilename = self._eyefile.split(os.path.sep)[-1]
         self._verbose = verbose

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import vidrec
 import numpy as np
 import cv2
-from tqdm import tqdm
+#from tqdm import tqdm
 import argparse
 
 
@@ -33,20 +33,40 @@ args = parser.parse_args()
 
 
 print("\nTesting videorecorder:")
-Eye1 = vidrec.EyeRecording(args.filepath, eyeid=2, verbose=True)
+Eye1 = vidrec.EyeRecording(args.filepath, eyeid=1, verbose=False)
 print(Eye1)
 
 print("\nTest loading frames")
-datablock = Eye1[::50]
-video_file_name = os.path.join(args.filepath,'eye2.mov')
-fourcc = cv2.VideoWriter_fourcc(*'avc1')
-video_object = cv2.VideoWriter( video_file_name,fourcc, 30.0, (Eye1.xres,Eye1.yres) )
+datablock = Eye1[500:1000]
+#video_file_name = os.path.join(args.filepath,'eye2.mov')
+#fourcc = cv2.VideoWriter_fourcc(*'avc1')
 
-with tqdm(total=datablock.shape[2], desc="Writing", unit="Fr") as bar:
-    for fr in range(datablock.shape[2]):
-        video_object.write(datablock[:,:,fr])
-        bar.update(1)
+# !!! try with 640x480 sized images
 
+
+video_file_name = os.path.join(args.filepath,'eye1.avi')
+fourcc = cv2.VideoWriter_fourcc(*'divx')
+video_object = cv2.VideoWriter( video_file_name, fourcc, 30.0, (Eye1.xres,Eye1.yres) )
+# video_object = cv2.VideoWriter( video_file_name, fourcc, 30.0, (640,480) )
+
+print(datablock.shape)
+print(Eye1.xres,Eye1.yres)
+
+# with tqdm(total=datablock.shape[2], desc="Writing", unit="Fr") as bar:
+    # for fr in range(datablock.shape[2]):
+        # video_object.write(datablock[:,:,fr])
+        # bar.update(1)
+
+# for fr in range(255):
+for fr in range(datablock.shape[2]):
+    # frame = np.zeros((480,640,3)).astype(np.uint8)+fr
+    frame = datablock[:,:,fr]
+    frame = np.repeat(frame[:,:,np.newaxis],3,axis=2)
+    print(frame.dtype)
+    print(frame.shape)
+    video_object.write(frame)
+    
+    # video_object.write(datablock[:,:,fr].T)
 video_object.release()
 
 # Set up video file
