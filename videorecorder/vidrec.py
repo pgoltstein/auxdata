@@ -95,11 +95,22 @@ class EyeRecording(object):
             frames = np.array(indices)
         else:
             frames = np.array([indices,])
+        print(type(frames))
+        print(frames.dtype)
 
         frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
+        print(frame_step)
+        print(type(frame_step))
+        # print(frame_step.dtype)
         frame_size = self.xres*self.yres
+        print(frame_size)
+        print(type(frame_size))
+        # print(frame_size.dtype)
         frame_ixs = (frames * frame_step) + (self._metadata_size*8)
         n_frame_ixs = len(frame_ixs)
+        print(type(frame_ixs))
+        print(frame_ixs.dtype)
+        print(frame_ixs[-1])
 
         # Check if continuous block of frames
         moviedata = np.zeros((self.yres,self.xres,n_frame_ixs),dtype=np.uint8)
