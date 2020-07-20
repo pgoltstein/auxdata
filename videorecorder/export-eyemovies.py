@@ -91,7 +91,7 @@ def export_eye_movie( filepath, eyemovie_filename, target_filename, overwrite_ex
             return None
 
     # Load eye movie data
-    eyemovie = Eye[:100]
+    eyemovie = Eye[:]
 
     # Create video file object
     fourcc = cv2.VideoWriter_fourcc(*codec)
