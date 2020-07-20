@@ -43,50 +43,54 @@ datablock = Eye1[500:1000]
 
 # !!! try with 640x480 sized images
 
+print("\nTesting videorecorder:")
+Vid = vidrec.VidRecording(args.filepath, filename=None, verbose=False)
+print(Vid)
 
-video_file_name = os.path.join(args.filepath,'eye1.avi')
-fourcc = cv2.VideoWriter_fourcc(*'divx')
-video_object = cv2.VideoWriter( video_file_name, fourcc, 30.0, (Eye1.xres,Eye1.yres) )
-# video_object = cv2.VideoWriter( video_file_name, fourcc, 30.0, (640,480) )
 
-print(datablock.shape)
-print(Eye1.xres,Eye1.yres)
+# video_file_name = os.path.join(args.filepath,'eye1.avi')
+# fourcc = cv2.VideoWriter_fourcc(*'divx')
+# video_object = cv2.VideoWriter( video_file_name, fourcc, 30.0, (Eye1.xres,Eye1.yres) )
+# # video_object = cv2.VideoWriter( video_file_name, fourcc, 30.0, (640,480) )
+#
+# print(datablock.shape)
+# print(Eye1.xres,Eye1.yres)
 
 # with tqdm(total=datablock.shape[2], desc="Writing", unit="Fr") as bar:
     # for fr in range(datablock.shape[2]):
         # video_object.write(datablock[:,:,fr])
         # bar.update(1)
 
-# for fr in range(255):
-for fr in range(datablock.shape[2]):
-    # frame = np.zeros((480,640,3)).astype(np.uint8)+fr
-    frame = datablock[:,:,fr]
-    frame = np.repeat(frame[:,:,np.newaxis],3,axis=2)
-    print(frame.dtype)
-    print(frame.shape)
-    video_object.write(frame)
-    
-    # video_object.write(datablock[:,:,fr].T)
-video_object.release()
+# # for fr in range(255):
+# for fr in range(datablock.shape[2]):
+#     # frame = np.zeros((480,640,3)).astype(np.uint8)+fr
+#     frame = datablock[:,:,fr]
+#     frame = np.repeat(frame[:,:,np.newaxis],3,axis=2)
+#     print(frame.dtype)
+#     print(frame.shape)
+#     video_object.write(frame)
+#
+#     # video_object.write(datablock[:,:,fr].T)
+# video_object.release()
 
 # Set up video file
 # video_file_name = os.path.join(args.filepath,'eye1.mov')
 # fourcc = cv2.VideoWriter_fourcc(*'avc1')
 # video_object = cv2.VideoWriter( video_file_name,fourcc, 30.0, (Eye1.xres,Eye1.yres) )
 
-# # Playback movie
-# for fr in range(Eye1.nframes):
-#     frame = Eye1[fr]
-#     cv2.imshow('frame',frame)
-#
-#     # video_object.write(frame)
-#
-#     # Exit if ESC pressed
-#     try:
-#         k = cv2.waitKey(1) & 0xff
-#         if k == 27 : break
-#     except:
-#         pass
+# Playback movie
+for fr in range(Vid.nframes):
+    frame = Vid[fr]
+    cv2.imshow('frame',frame)
+
+    # video_object.write(frame)
+
+    # Exit if ESC pressed
+    try:
+        k = cv2.waitKey(1) & 0xff
+        if k == 27 : break
+    except:
+        pass
 
 # Release video file
 # video_object.release()

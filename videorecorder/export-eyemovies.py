@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 
-This script finds eyemovies in the supplied directory and converts them to a platform compatible video file
+This script finds eye movies in the supplied directory and converts them to a platform compatible video file
 
 Created on Sunday 19 July 2020
 
@@ -43,7 +43,7 @@ elif "win" in _platform.lower():
 # =============================================================================
 # Arguments
 
-parser = argparse.ArgumentParser( description = "This script finds eyemovies in the supplied directory and converts them to a platform compatible video file.\n (written by Pieter Goltstein - July 2020)")
+parser = argparse.ArgumentParser( description = "This script finds .eye movies in the supplied directory and converts them to a platform compatible video file.\n (written by Pieter Goltstein - July 2020)")
 parser.add_argument('filepath', type=str, help= 'path to the folder holding the .eye1 and .eye2 files')
 parser.add_argument('-o', '--overwrite',  action="store_true", default=False, help='Enables to overwrite existing files')
 args = parser.parse_args()
@@ -91,7 +91,7 @@ def export_eye_movie( filepath, eyemovie_filename, target_filename, overwrite_ex
             return None
 
     # Load eye movie data
-    eyemovie = Eye[:]
+    eyemovie = Eye[:100]
 
     # Create video file object
     fourcc = cv2.VideoWriter_fourcc(*codec)
@@ -112,18 +112,14 @@ def export_eye_movie( filepath, eyemovie_filename, target_filename, overwrite_ex
 # =============================================================================
 # Main
 
-# Find files and produce target file names
-eye_source_filenames,video_target_filenames = find_eye_files(filepath)
+# Find eye files and convert
+eye_source_filenames,eye_target_filenames = find_eye_files(filepath)
+for eye_source,eye_target in zip(eye_source_filenames,eye_target_filenames):
 
-# Loop files
-for eye_source,eye_target in zip(eye_source_filenames,video_target_filenames):
-
-    print("\n--- exporting eye-movie ---".format(eye_source))
+    print("\n--- exporting eye-movie ---\nBase path:{}".format(filepath))
 
     # Read eyemovie and write video
     export_eye_movie( filepath, eye_source, eye_target, overwrite_existing=overwrite_old_files)
-
-
 
 
 
