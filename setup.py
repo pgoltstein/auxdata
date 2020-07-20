@@ -11,6 +11,6 @@ setup(  name='auxdata',
         author_email='xpieter@mac.com',
         license='GNU GENERAL PUBLIC LICENSE Version 3',
         packages=['auxrecorder'],
-        install_requires=['numpy','alive_progress'],
+        install_requires=['numpy','tqdm'],
         zip_safe=False
         )
