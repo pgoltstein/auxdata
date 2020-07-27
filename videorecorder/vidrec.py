@@ -84,6 +84,30 @@ class EyeRecording(object):
         """ Number of frames """
         return self._nframes
 
+    @property
+    def timestamps(self):
+        """ Returns the frame timestamps """
+        frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
+        frame_size = self.xres*self.yres
+        frame_ixs = (np.arange(self._nframes) * frame_step)
+        n_frame_ixs = len(frame_ixs)
+
+        # Check if continuous block of frames
+        timestamps = np.zeros( (self._nframes,) )
+        if self._verbose:
+            with tqdm(total=n_frame_ixs, desc="Reading timestamps", unit="Fr") as bar:
+                with open(self._eyefile, 'rb') as f:
+                    for fr_nr,fr_ix in enumerate(frame_ixs):
+                        f.seek(fr_ix)
+                        timestamps[fr_nr] = np.fromfile(f, dtype='>f8', count=1)
+                        bar.update(1)
+        else:
+            with open(self._eyefile, 'rb') as f:
+                for fr_nr,fr_ix in enumerate(frame_ixs):
+                    f.seek(fr_ix)
+                    timestamps[fr_nr] = np.fromfile(f, dtype='>f8', count=1)
+        return timestamps
+
     # Internal function to load the movie data using slicing
     def __getitem__(self, indices):
         """ Loads and returns the eye movie data directly from disk """
@@ -183,6 +207,30 @@ class VidRecording(object):
     def nframes(self):
         """ Number of frames """
         return self._nframes
+
+    @property
+    def timestamps(self):
+        """ Returns the frame timestamps """
+        frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
+        frame_size = self.xres*self.yres
+        frame_ixs = (np.arange(self._nframes) * frame_step)
+        n_frame_ixs = len(frame_ixs)
+
+        # Check if continuous block of frames
+        timestamps = np.zeros( (self._nframes,) )
+        if self._verbose:
+            with tqdm(total=n_frame_ixs, desc="Reading timestamps", unit="Fr") as bar:
+                with open(self._vidfile, 'rb') as f:
+                    for fr_nr,fr_ix in enumerate(frame_ixs):
+                        f.seek(fr_ix)
+                        timestamps[fr_nr] = np.fromfile(f, dtype='>f8', count=1)
+                        bar.update(1)
+        else:
+            with open(self._vidfile, 'rb') as f:
+                for fr_nr,fr_ix in enumerate(frame_ixs):
+                    f.seek(fr_ix)
+                    timestamps[fr_nr] = np.fromfile(f, dtype='>f8', count=1)
+        return timestamps
 
     # Internal function to load the movie data using slicing
     def __getitem__(self, indices):

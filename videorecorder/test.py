@@ -11,7 +11,7 @@ Created on Thursday 16 July 2020
 @author: pgoltstein
 """
 
-import os, glob
+import os, glob, sys
 import matplotlib.pyplot as plt
 import vidrec
 import numpy as np
@@ -24,7 +24,7 @@ import argparse
 # Arguments
 
 parser = argparse.ArgumentParser( description = "This script tests the module video recorder.\n (written by Pieter Goltstein - July 2020)")
-parser.add_argument('filepath', type=str, help= 'path to the folder holding the .eye1, .eye2 and .vid file')
+parser.add_argument('filepath', type=str, help= 'path to the folder holding the lvd, .eye1, .eye2 and .vid file')
 args = parser.parse_args()
 
 
@@ -33,7 +33,7 @@ args = parser.parse_args()
 
 
 print("\nTesting videorecorder:")
-Eye1 = vidrec.EyeRecording(args.filepath, eyeid=1, verbose=False)
+Eye1 = vidrec.EyeRecording(args.filepath, eyeid=1, verbose=True)
 print(Eye1)
 
 print("\nTest loading frames")
@@ -44,9 +44,18 @@ datablock = Eye1[500:1000]
 # !!! try with 640x480 sized images
 
 print("\nTesting videorecorder:")
-Vid = vidrec.VidRecording(args.filepath, filename=None, verbose=False)
+Vid = vidrec.VidRecording(args.filepath, filename=None, verbose=True)
 print(Vid)
 
+timestamps1 = Eye1.timestamps
+print(timestamps1[0])
+print(timestamps1[1])
+plt.plot(timestamps1-timestamps1[0])
+timestamps2 = Vid.timestamps
+print(timestamps2[0])
+print(timestamps2[1])
+plt.plot(timestamps2-timestamps2[0])
+plt.show()
 
 # video_file_name = os.path.join(args.filepath,'eye1.avi')
 # fourcc = cv2.VideoWriter_fourcc(*'divx')
@@ -78,19 +87,19 @@ print(Vid)
 # fourcc = cv2.VideoWriter_fourcc(*'avc1')
 # video_object = cv2.VideoWriter( video_file_name,fourcc, 30.0, (Eye1.xres,Eye1.yres) )
 
-# Playback movie
-for fr in range(Vid.nframes):
-    frame = Vid[fr]
-    cv2.imshow('frame',frame)
-
-    # video_object.write(frame)
-
-    # Exit if ESC pressed
-    try:
-        k = cv2.waitKey(1) & 0xff
-        if k == 27 : break
-    except:
-        pass
+# # Playback movie
+# for fr in range(Vid.nframes):
+#     frame = Vid[fr]
+#     cv2.imshow('frame',frame)
+#
+#     # video_object.write(frame)
+#
+#     # Exit if ESC pressed
+#     try:
+#         k = cv2.waitKey(1) & 0xff
+#         if k == 27 : break
+#     except:
+#         pass
 
 # Release video file
 # video_object.release()
