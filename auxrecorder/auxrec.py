@@ -104,6 +104,11 @@ class LvdAuxRecorder(object):
         return 1/self._imifi
 
     @property
+    def sf(self):
+        """ Returns the sampling frequency of the auxdata """
+        return self._sf
+
+    @property
     def darkframes(self):
         """ Returns the onset and offset of the darkframes """
         return self._darkfr_on, self._darkfr_off

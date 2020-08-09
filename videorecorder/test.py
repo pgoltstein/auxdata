@@ -31,7 +31,6 @@ args = parser.parse_args()
 # =============================================================================
 # Code
 
-
 print("\nTesting videorecorder:")
 Eye1 = vidrec.EyeRecording(args.filepath, eyeid=1, verbose=True)
 print(Eye1)
@@ -50,10 +49,12 @@ print(Vid)
 timestamps1 = Eye1.timestamps
 print(timestamps1[0])
 print(timestamps1[1])
+print(timestamps1[-1]-timestamps1[0])
 plt.plot(timestamps1-timestamps1[0])
 timestamps2 = Vid.timestamps
 print(timestamps2[0])
 print(timestamps2[1])
+print(timestamps2[-1]-timestamps2[0])
 plt.plot(timestamps2-timestamps2[0])
 plt.show()
 

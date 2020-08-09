@@ -86,7 +86,7 @@ class EyeRecording(object):
 
     @property
     def timestamps(self):
-        """ Returns the frame timestamps """
+        """ Returns the frame timestamps in milliseconds """
         frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
         frame_size = self.xres*self.yres
         frame_ixs = (np.arange(self._nframes) * frame_step)
@@ -210,7 +210,7 @@ class VidRecording(object):
 
     @property
     def timestamps(self):
-        """ Returns the frame timestamps """
+        """ Returns the frame timestamps in milliseconds """
         frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
         frame_size = self.xres*self.yres
         frame_ixs = (np.arange(self._nframes) * frame_step)
