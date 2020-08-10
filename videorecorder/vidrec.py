@@ -89,7 +89,7 @@ class EyeRecording(object):
         """ Returns the frame timestamps in milliseconds """
         frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
         frame_size = self.xres*self.yres
-        frame_ixs = (np.arange(self._nframes) * frame_step)
+        frame_ixs = (np.arange(self._nframes).astype(np.int64) * frame_step)
         n_frame_ixs = len(frame_ixs)
 
         # Check if continuous block of frames
@@ -213,7 +213,7 @@ class VidRecording(object):
         """ Returns the frame timestamps in milliseconds """
         frame_step = ((self.xres*self.yres)+(self._metadata_size*8))
         frame_size = self.xres*self.yres
-        frame_ixs = (np.arange(self._nframes) * frame_step)
+        frame_ixs = (np.arange(self._nframes).astype(np.int64) * frame_step)
         n_frame_ixs = len(frame_ixs)
 
         # Check if continuous block of frames
