@@ -98,8 +98,12 @@ def export_video_index( imageframe_ts, videoframe_ts, filepath, export_filename,
     video_conversion_index = np.zeros_like(imageframe_ts)
     for nr,im_ts in enumerate(imageframe_ts):
         video_conversion_index[nr] = np.argmin(np.abs(videoframe_ts-im_ts))
-    print("nr={:4.0f}, frame index={:5.0f}".format( 0, video_conversion_index[0] ))
-    print("nr={:4.0f}, frame index={:5.0f}".format( nr, video_conversion_index[nr] ))
+    # print("nr={:4.0f}, frame index={:5.0f}".format( 0, video_conversion_index[0] ))
+    # print("nr={:4.0f}, frame index={:5.0f}".format( nr, video_conversion_index[nr] ))
+    # print(videoframe_ts[0])
+    # print(imageframe_ts[0])
+    # print(videoframe_ts[-1])
+    # print(imageframe_ts[-1])
 
     # Save index to file
     export_file_name = os.path.join(filepath,export_filename)
@@ -121,8 +125,9 @@ Aux = auxrec.LvdAuxRecorder(args.filepath, nimagingplanes=n_imaging_planes)
 print(Aux)
 
 # Get timestamps (in seconds) for frame onsets
-frameonsets,ifi = Aux._calculate_imaging_frames()
+frameonsets = Aux.imagingframes
 frameonset_ts = (frameonsets / Aux.sf).ravel()
+video_vs_aux_start_offset,_ = Aux.shuttertimestamps
 
 # Find eye files and convert
 eye_source_filenames, frameindex_target_filenames = find_eye_files(filepath)
@@ -140,7 +145,7 @@ for eye_source, frameindex_target in zip(eye_source_filenames,frameindex_target_
         video_ts = ((video_ts - video_ts[0]) / 1000).ravel()
 
         # The video start at the first imaging frame, while the aux recorder starts earlier, so correct the video timestamps for that
-        video_ts = video_ts + frameonset_ts[0]
+        video_ts = video_ts + video_vs_aux_start_offset
 
         # Calculate the video frame index and export to file
         export_video_index( imageframe_ts=frameonset_ts, videoframe_ts=video_ts, filepath=filepath, export_filename=frameindex_target, store_as_matlab=store_as_matlab )
@@ -161,7 +166,7 @@ for vid_source,frameindex_target in zip(vid_source_filenames,vid_target_filename
         video_ts = ((video_ts - video_ts[0]) / 1000).ravel()
 
         # The video start at the first imaging frame, while the aux recorder starts earlier, so correct the video timestamps for that
-        video_ts = video_ts + frameonset_ts[0]
+        video_ts = video_ts + video_vs_aux_start_offset
 
         # Calculate the video frame index and export to file
         export_video_index( imageframe_ts=frameonset_ts, videoframe_ts=video_ts, filepath=filepath, export_filename=frameindex_target, store_as_matlab=store_as_matlab )

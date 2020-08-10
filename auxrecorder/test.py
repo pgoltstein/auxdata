@@ -36,6 +36,7 @@ print("Aux.imagingifi: {} s".format(Aux.imagingifi))
 print("Aux.imagingsf: {} Hz".format(Aux.imagingsf))
 print("Aux.darkframes: {}".format(Aux.darkframes))
 print("Aux.dataonsetframe: {}".format(Aux.dataonsetframe))
+print("Aux.shuttertimestamps: {}".format(Aux.shuttertimestamps))
 
 # Display channel
 plotrange = [0,100000]

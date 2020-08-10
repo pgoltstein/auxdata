@@ -86,6 +86,7 @@ class LvdAuxRecorder(object):
         # Process aux channels
         self._imframes, self._imifi = self._calculate_imaging_frames()
         self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
+        self._shutter_open_ts, self._shutter_closed_ts = self._calculate_shutter_onset_offset_ts()
 
 
     # properties
@@ -109,9 +110,19 @@ class LvdAuxRecorder(object):
         return self._sf
 
     @property
+    def imagingframes(self):
+        """ Returns the onset timestamp of each imaging frame """
+        return self._imframes
+
+    @property
     def darkframes(self):
         """ Returns the onset and offset of the darkframes """
         return self._darkfr_on, self._darkfr_off
+
+    @property
+    def shuttertimestamps(self):
+        """ Returns the onset and offset of the shutter in timestamps (s)"""
+        return self._shutter_open_ts/self._sf, self._shutter_closed_ts/self._sf
 
     @property
     def dataonsetframe(self):
@@ -132,6 +143,23 @@ class LvdAuxRecorder(object):
     def raw_channel(self,nr=0):
         """ returns the raw channel data, by channel number """
         return self._auxdata[:,nr]
+
+    # Internal methods
+    def _calculate_shutter_onset_offset_ts(self):
+        """ Calculates the onset and offset of the two photon shutter """
+        # Get channel info
+        shutterchannelname = self._processingsettings["shutter"]["channel"]
+        shutterchannelnr = self._channelsettings[shutterchannelname]["nr"]
+        channelthreshold = self._processingsettings["shutter"]["threshold"]
+
+        # Threshold the frames
+        channeldata = self._auxdata[:,shutterchannelnr]
+
+        # Find onset and offset in aux channel
+        shutter_onset = np.argwhere( np.diff((channeldata > channelthreshold) * 1.0) > 0 ) + 1 # +1 compensates shift introduced by np.diff
+        shutter_offset = np.argwhere( np.diff((channeldata > channelthreshold) * 1.0) < 0 ) + 1 # +1 compensates shift introduced by np.diff
+
+        return float(shutter_onset), float(shutter_offset)
 
     # Internal methods
     def _calculate_darkframes_dataonset(self):
