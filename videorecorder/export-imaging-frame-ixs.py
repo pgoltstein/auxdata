@@ -118,7 +118,7 @@ def export_video_index( imageframe_ts, videoframe_ts, filepath, export_filename,
 # =============================================================================
 # Main
 
-print("\n--- calculating frame indices eye-movie ---\nBase path:{}".format(filepath))
+print("\n--- calculating frame indices for eye and vid movies ---\nBase path:{}".format(filepath))
 
 # Load Aux data
 Aux = auxrec.LvdAuxRecorder(args.filepath, nimagingplanes=n_imaging_planes)
