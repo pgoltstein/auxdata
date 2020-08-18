@@ -106,6 +106,18 @@ class EyeRecording(object):
                 for fr_nr,fr_ix in enumerate(frame_ixs):
                     f.seek(fr_ix)
                     timestamps[fr_nr] = np.fromfile(f, dtype='>f8', count=1)
+                    
+        # Occasionally there is a glitch in the first timestamp, fix this by taking the second timestamp and subtracting the IFI from it
+        if timestamps[0] > timestamps[1]:
+            print("!!! Warning: Detected glitch in timestamps, attempted to fix, but check if data makes sense !!!")
+            old_ts_value = timestamps[0]
+            IFI = np.mean(timestamps[2:11]-timestamps[1:10]).astype(np.int64)
+            timestamps[0] = timestamps[1]-IFI
+            print("Corrected timestamp 0 from {} to {} using estimated IFI of {}".format(old_ts_value,timestamps[0],IFI))
+            if timestamps[0] < 0:
+                print("Timestamp 0 ended up below 0, corrected to exactly 0")
+                timestamps[0] = 0
+                
         return timestamps
 
     # Internal function to load the movie data using slicing
@@ -230,8 +242,20 @@ class VidRecording(object):
                 for fr_nr,fr_ix in enumerate(frame_ixs):
                     f.seek(fr_ix)
                     timestamps[fr_nr] = np.fromfile(f, dtype='>f8', count=1)
-        return timestamps
 
+        # Occasionally there is a glitch in the first timestamp, fix this by taking the second timestamp and subtracting the IFI from it
+        if timestamps[0] > timestamps[1]:
+            print("!!! Warning: Detected glitch in timestamps, attempted to fix, but check if data makes sense !!!")
+            old_ts_value = timestamps[0]
+            IFI = np.mean(timestamps[2:11]-timestamps[1:10]).astype(np.int64)
+            timestamps[0] = timestamps[1]-IFI
+            print("Corrected timestamp 0 from {} to {} using estimated IFI of {}".format(old_ts_value,timestamps[0],IFI))
+            if timestamps[0] < 0:
+                print("Timestamp 0 ended up below 0, corrected to exactly 0")
+                timestamps[0] = 0
+                
+        return timestamps
+        
     # Internal function to load the movie data using slicing
     def __getitem__(self, indices):
         """ Loads and returns the .vid movie data directly from disk """
