@@ -14,6 +14,7 @@ import os, glob
 import datetime
 import numpy as np
 from scipy import stats as scistats
+import matplotlib.pyplot as plt
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 # Classes
@@ -178,9 +179,15 @@ class LvdAuxRecorder(object):
         df_offset = np.argwhere( np.diff((cleaned_channel!=channelvalue) * 1.0) > 0 ) + 1 # +1 compensates shift introduced by np.diff
 
         # Convert to frames
-        df_onset_fr = np.argmin( np.abs(self._imframes - df_onset[0]) )
-        df_offset_fr = np.argmin( np.abs(self._imframes - df_offset[0]) )
-        dataonset = np.ceil( df_offset_fr + self.imagingsf )
+        if df_onset.size == 0 and df_offset.size == 0:
+            df_onset_fr = None
+            df_offset_fr = None
+            dataonset = 0
+            return df_onset_fr, df_offset_fr, dataonset
+        else:
+            df_onset_fr = np.argmin( np.abs(self._imframes - df_onset[0]) )
+            df_offset_fr = np.argmin( np.abs(self._imframes - df_offset[0]) )
+            dataonset = np.ceil( df_offset_fr + self.imagingsf )
 
         # Return dark frame onset, offset, dataonset; add/subtract 1 for safety
         return int(df_onset_fr+1), int(df_offset_fr-1), int(dataonset+1)
