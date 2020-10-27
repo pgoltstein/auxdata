@@ -87,13 +87,13 @@ class LvdAuxRecorder(object):
         # Process aux channels
         self._imframes, self._imifi = self._calculate_imaging_frames()
         self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
-        self._shutter_open_ts, self._shutter_closed_ts = self._calculate_shutter_onset_offset_ts()
+        self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
 
 
     # properties
     def __str__(self):
         """ Returns a printable string with summary output """
-        return "AuxData file {} from {}\n* Channel settings: {}\n* {} channels, {} datapoints, samplingfreq={}Hz, max input={}V".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV )
+        return "AuxData file {} from {}\n* Channel settings: {}\n  {} channels, {} datapoints, samplingfreq={}Hz, max input={}V\n  {} imaging frames, imaging samplingfreq={:0.2f}Hz, #planes={}".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV, len(self._imframes), self.imagingsf, self._nimagingplanes )
 
     @property
     def imagingifi(self):
@@ -123,12 +123,38 @@ class LvdAuxRecorder(object):
     @property
     def shuttertimestamps(self):
         """ Returns the onset and offset of the shutter in timestamps (s)"""
-        return self._shutter_open_ts/self._sf, self._shutter_closed_ts/self._sf
+        return self._shutter_open_fr/self._sf, self._shutter_closed_fr/self._sf
 
     @property
     def dataonsetframe(self):
         """ Returns the onset frame of the clean imaging period """
         return self._dataonsetframe
+
+    @property
+    def stimulus_onsets(self):
+        """ calculates the imaging frames in which the stimulus onset happened """
+        # Get channel info
+        stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
+        stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
+        channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
+
+        # Threshold the frames
+        channeldata = self._auxdata[:,stim_on_channelnr]
+        channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
+
+        # Find the frame onsets
+        frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
+
+        if frameonsets_aux.size == 0:
+            return np.array([])
+
+        # Convert to frames
+        frameonsets_fr = np.zeros_like(frameonsets_aux)
+        for ix in range(len(frameonsets_aux)):
+            frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
+
+        # Return stimulus onset frames
+        return frameonsets_fr.astype(np.int).ravel()
 
     @property
     def imagingplane(self):
@@ -146,7 +172,7 @@ class LvdAuxRecorder(object):
         return self._auxdata[:,nr]
 
     # Internal methods
-    def _calculate_shutter_onset_offset_ts(self):
+    def _calculate_shutter_onset_offset_fr(self):
         """ Calculates the onset and offset of the two photon shutter """
         # Get channel info
         shutterchannelname = self._processingsettings["shutter"]["channel"]
@@ -162,7 +188,6 @@ class LvdAuxRecorder(object):
 
         return float(shutter_onset), float(shutter_offset)
 
-    # Internal methods
     def _calculate_darkframes_dataonset(self):
         """ Calculates the onset and offset of the darkframes and the data onset frame """
         # Get channel info

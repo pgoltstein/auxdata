@@ -25,6 +25,7 @@ import argparse
 
 parser = argparse.ArgumentParser( description = "This script finds aux, eye and vid movies in the supplied directory, gets the movie timestamps and imaging frame timestamps, and stores a numpy or matlab file that holds the nearest video-index for each imaging frame.\n (written by Pieter Goltstein - August 2020)")
 parser.add_argument('filepath', type=str, help= 'path to the folder holding the .lvd, .vid, .eye1 and .eye2 files')
+parser.add_argument('-f', '--filestem', type=str, default="", help='filestem for selecting matching aux, lvd and eye files')
 parser.add_argument('-o', '--overwrite',  action="store_true", default=False, help='Enables to overwrite existing files')
 parser.add_argument('-m', '--matlab',  action="store_true", default=False, help='Stores data as .mat file')
 parser.add_argument('-n', '--nimagingplanes',  type=int, help='Number of imaging planes acquired in fast z-stack (default=1)', default=1)
@@ -34,6 +35,7 @@ args = parser.parse_args()
 filepath = args.filepath
 if filepath[-1] == '"':
     filepath = filepath[:-1]
+filestem = args.filestem
 overwrite_old_files = args.overwrite
 store_as_matlab = args.matlab
 n_imaging_planes = args.nimagingplanes
@@ -42,10 +44,10 @@ n_imaging_planes = args.nimagingplanes
 # =============================================================================
 # Functions
 
-def find_eye_files(path):
+def find_eye_files(path, filestem):
     """ Returns a list with full filenames, and their conversion filenames
     """
-    search_path = os.path.join(path,"*.eye*")
+    search_path = os.path.join(path,"*"+filestem+"*.eye*")
     eye_files_full = glob.glob(search_path)
     eye_source_filenames = []
     frameindex_target_filenames = []
@@ -56,10 +58,10 @@ def find_eye_files(path):
         frameindex_target_filenames.append(target_name)
     return eye_source_filenames, frameindex_target_filenames
 
-def find_vid_files(path):
+def find_vid_files(path, filestem):
     """ Returns a list with full filenames, and their conversion filenames
     """
-    search_path = os.path.join(path,"*.vid")
+    search_path = os.path.join(path,"*"+filestem+"*.vid")
     vid_files_full = glob.glob(search_path)
     vid_source_filenames = []
     frameindex_target_filenames = []
@@ -98,12 +100,14 @@ def export_video_index( imageframe_ts, videoframe_ts, filepath, export_filename,
     video_conversion_index = np.zeros_like(imageframe_ts)
     for nr,im_ts in enumerate(imageframe_ts):
         video_conversion_index[nr] = np.argmin(np.abs(videoframe_ts-im_ts))
-    # print("nr={:4.0f}, frame index={:5.0f}".format( 0, video_conversion_index[0] ))
-    # print("nr={:4.0f}, frame index={:5.0f}".format( nr, video_conversion_index[nr] ))
+
     # print(videoframe_ts[0])
     # print(imageframe_ts[0])
+    # print("nr={:4.0f}, frame index={:5.0f}".format( 0, video_conversion_index[0] ))
+    #
     # print(videoframe_ts[-1])
     # print(imageframe_ts[-1])
+    # print("nr={:4.0f}, frame index={:5.0f}".format( nr, video_conversion_index[nr] ))
 
     # Save index to file
     export_file_name = os.path.join(filepath,export_filename)
@@ -121,7 +125,8 @@ def export_video_index( imageframe_ts, videoframe_ts, filepath, export_filename,
 print("\n--- calculating frame indices for eye and vid movies ---\nBase path:{}".format(filepath))
 
 # Load Aux data
-Aux = auxrec.LvdAuxRecorder(args.filepath, nimagingplanes=n_imaging_planes)
+auxfilestem = "*"+filestem+"*.lvd"
+Aux = auxrec.LvdAuxRecorder(args.filepath, filename=auxfilestem, nimagingplanes=n_imaging_planes)
 print(Aux)
 
 # Get timestamps (in seconds) for frame onsets
@@ -130,7 +135,7 @@ frameonset_ts = (frameonsets / Aux.sf).ravel()
 video_vs_aux_start_offset,_ = Aux.shuttertimestamps
 
 # Find eye files and convert
-eye_source_filenames, frameindex_target_filenames = find_eye_files(filepath)
+eye_source_filenames, frameindex_target_filenames = find_eye_files(filepath,filestem)
 for eye_source, frameindex_target in zip(eye_source_filenames,frameindex_target_filenames):
 
     # First check if file was not already exported
@@ -151,7 +156,7 @@ for eye_source, frameindex_target in zip(eye_source_filenames,frameindex_target_
         export_video_index( imageframe_ts=frameonset_ts, videoframe_ts=video_ts, filepath=filepath, export_filename=frameindex_target, store_as_matlab=store_as_matlab )
 
 # Find .vid files and convert
-vid_source_filenames,vid_target_filenames = find_vid_files(filepath)
+vid_source_filenames,vid_target_filenames = find_vid_files(filepath,filestem)
 for vid_source,frameindex_target in zip(vid_source_filenames,vid_target_filenames):
 
     # First check if file was not already exported

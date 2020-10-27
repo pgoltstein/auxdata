@@ -18,5 +18,6 @@ auxchannels = {
 auxprocessing = {
     "darkframes": {"channel": "task", "threshold": 0.4, "value": 0.5, "resolution": 0.5},
     "framecounts": {"channel": "frame", "threshold": 2.0},
-    "shutter": {"channel": "shutter", "threshold": 2.0}
+    "shutter": {"channel": "shutter", "threshold": 2.0},
+    "stimulusonset": {"channel": "stimulus", "threshold": 0.8}
 }
