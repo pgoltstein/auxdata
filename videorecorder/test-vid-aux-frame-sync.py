@@ -13,7 +13,10 @@ Created on Saturday 24 Oct 2020
 
 import os, glob, sys
 import matplotlib.pyplot as plt
-sys.path.append('../auxrecorder')
+if "darwin" in sys.platform.lower(): # MAC OS X
+    sys.path.append('../auxrecorder')
+elif "win" in sys.platform.lower(): # Windows
+    sys.path.append('D:/code/auxdata/auxrecorder')
 import auxrec
 import vidrec
 import numpy as np
