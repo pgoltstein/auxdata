@@ -13,8 +13,12 @@ import os, glob, sys
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io import savemat
-sys.path.append('../auxrecorder')
-sys.path.append('../videorecorder')
+if "darwin" in sys.platform.lower(): # MAC OS X
+    sys.path.append('../auxrecorder')
+    sys.path.append('../videorecorder')
+elif "win" in sys.platform.lower(): # Windows
+    sys.path.append('D:/code/auxdata/auxrecorder')
+    sys.path.append('D:/code/auxdata/videorecorder')
 import auxrec
 import vidrec
 import argparse

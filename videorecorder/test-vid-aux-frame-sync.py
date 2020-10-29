@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 if "darwin" in sys.platform.lower(): # MAC OS X
     sys.path.append('../auxrecorder')
 elif "win" in sys.platform.lower(): # Windows
-    sys.path.append('D:\\code\\auxdata\\auxrecorder')
+    sys.path.append('D:/code/auxdata/auxrecorder')
 import auxrec
 import vidrec
 import numpy as np
