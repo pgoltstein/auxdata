@@ -67,6 +67,10 @@ if filepath[-1] == '"':
 filestem = args.filestem
 n_imaging_planes = args.nimagingplanes
 datatype = args.datatype
+mousename = filepath[-3:]
+
+
+outlier_stds = 4
 
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
@@ -257,9 +261,10 @@ if len(dlc_h5_file) > 0:
 if "eye" in datatype and do_dlc:
     plot_names = ["Pupil x position","Pupil y position","Pupil diameter"]
     plot_data = eye_tracking_parameters( dlcdata )
-    fig,ax = init_figure_axes(fig_size=(8*len(plot_names),8))
     x_range = np.arange(-5,20)
     x_values = x_range / Aux.imagingsf
+    
+    fig,ax = init_figure_axes(fig_size=(8*len(plot_names),8))
     for plt_cnt,(name,data) in enumerate(zip(plot_names,plot_data)):
         ax = plt.subplot2grid( (1,len(plot_names)), (0,plt_cnt) )
         data_mat = np.zeros((len(stim_onsets),len(x_range)))
@@ -268,35 +273,54 @@ if "eye" in datatype and do_dlc:
             data_mat[tr_nr,:] = data[sync_ixs[frames]]
             plt.plot(x_values,data_mat[tr_nr,:],color="#aaaaaa")
         mn,sem,n = mean_sem( data_mat, axis=0 )
-        line( x_values, mn, sem, line_color="#000000", sem_color="#000000" )
+        line( x_values, mn, sem, line_color="#0000AA", sem_color="#0000AA", shaded=True )
         finish_panel( ax, ylabel=name, xlabel="Time (s)", legend="off", x_minmax=[x_values[0],x_values[-1]], x_margin=0.55, x_axis_margin=0.55, despine=True )
-    finish_figure( filename=os.path.join("/Users/pgoltstein/figures",filestem+"-example-"+datatype+"-dlc"), wspace=0.6, hspace=0.2 )
+    finish_figure( filename=os.path.join("I:/Pieter Goltstein/CATlive/_revision/analysis/retinotopyshift/figs",mousename+"-"+filestem+"-example-"+datatype+"-dlc"), wspace=0.6, hspace=0.2 )
 
+    fig,ax = init_figure_axes(fig_size=(8*len(plot_names),8))
+    for plt_cnt,(name,data) in enumerate(zip(plot_names,plot_data)):
+        ax = plt.subplot2grid( (1,len(plot_names)), (0,plt_cnt) )
+        data_mat = np.zeros((len(stim_onsets),len(x_range)))
+        for tr_nr,tr in enumerate(stim_onsets):
+            frames = tr+x_range
+            data_mat[tr_nr,:] = data[sync_ixs[frames]]
+        mean_d = np.nanmean(data_mat)
+        std_d = np.nanstd(data_mat)
+        min_val, max_val = mean_d-(outlier_stds*std_d),mean_d+(outlier_stds*std_d)
+        # data_mat[np.logical_or(data_mat>max_val,data_mat<min_val)] = np.NaN
+        for tr_nr in range(data_mat.shape[0]):
+            if np.any(data_mat[tr_nr,:]>max_val) or np.any(data_mat[tr_nr,:]<min_val):
+                data_mat[tr_nr,:] = np.NaN
+            plt.plot(x_values,data_mat[tr_nr,:],color="#aaaaaa")
+        mn,sem,n = mean_sem( data_mat, axis=0 )
+        line( x_values, mn, sem, line_color="#0000AA", sem_color="#0000AA", shaded=True )
+        finish_panel( ax, ylabel=name, xlabel="Time (s)", legend="off", x_minmax=[x_values[0],x_values[-1]], x_margin=0.55, x_axis_margin=0.55, despine=True )
+    finish_figure( filename=os.path.join("I:/Pieter Goltstein/CATlive/_revision/analysis/retinotopyshift/figs",mousename+"-"+filestem+"-example-"+datatype+"-dlc-outlier"), wspace=0.6, hspace=0.2 )
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 # show 10 frames around stimulus onset for the 10 first trials
 
-# use_trials = np.arange(1,100,10).astype(int)
-# use_frames = np.arange(-1,11).astype(int)
-# n_frames_to_load = len(use_trials)*len(use_frames)
-# fig,ax = init_figure_axes(fig_size=(len(use_frames)*2,len(use_trials)*1.8))
-# with tqdm(total=n_frames_to_load, desc="Reading/processing", unit="Fr") as bar:
-#     for tr_cnt,tr in enumerate(use_trials):
-#         for fr_cnt,fr in enumerate(use_frames):
-#             ax = plt.subplot2grid( (len(use_trials),len(use_frames)), (tr_cnt,fr_cnt) )
-#             imaging_frame = stim_onsets[tr]+fr
-#             video_frame = sync_ixs[imaging_frame]
-#             image = Video[video_frame][:,:,0]
-#             plt.imshow(image, cmap='gray', vmin=0, vmax=255)
-#             plt.axis('off')
-#             if fr_cnt == 0:
-#                 plt.title("Trial {}".format(tr), fontsize=8)
-#             if fr_cnt == 2:
-#                 plt.title("on ->", fontsize=8)
-#             bar.update(1)
-# finish_figure( filename=os.path.join("/Users/pgoltstein/figures",filestem+"-example-"+datatype+"-sync"), wspace=0.1, hspace=0.4 )
+use_trials = np.arange(1,100,10).astype(int)
+use_frames = np.arange(-1,11).astype(int)
+n_frames_to_load = len(use_trials)*len(use_frames)
+fig,ax = init_figure_axes(fig_size=(len(use_frames)*2,len(use_trials)*1.8))
+with tqdm(total=n_frames_to_load, desc="Reading/processing", unit="Fr") as bar:
+    for tr_cnt,tr in enumerate(use_trials):
+        for fr_cnt,fr in enumerate(use_frames):
+            ax = plt.subplot2grid( (len(use_trials),len(use_frames)), (tr_cnt,fr_cnt) )
+            imaging_frame = stim_onsets[tr]+fr
+            video_frame = sync_ixs[imaging_frame]
+            image = Video[video_frame][:,:,0]
+            plt.imshow(image, cmap='gray', vmin=0, vmax=255)
+            plt.axis('off')
+            if fr_cnt == 0:
+                plt.title("Trial {}".format(tr), fontsize=8)
+            if fr_cnt == 2:
+                plt.title("on ->", fontsize=8)
+            bar.update(1)
+finish_figure( filename=os.path.join("I:/Pieter Goltstein/CATlive/_revision/analysis/retinotopyshift/figs",mousename+"-"+filestem+"-example-"+datatype+"-sync"), wspace=0.1, hspace=0.4 )
 
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 # That's all folks!
-plt.show()
+# plt.show()
