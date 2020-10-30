@@ -15,8 +15,10 @@ import os, glob, sys
 import matplotlib.pyplot as plt
 if "darwin" in sys.platform.lower(): # MAC OS X
     sys.path.append('../auxrecorder')
+    savefig = "/Users/pgoltstein/figures"
 elif "win" in sys.platform.lower(): # Windows
     sys.path.append('D:/code/auxdata/auxrecorder')
+    savefig = "I:/Pieter Goltstein/CATlive/_revision/analysis/retinotopyshift/figs"
 import auxrec
 import vidrec
 import numpy as np
@@ -263,7 +265,7 @@ if "eye" in datatype and do_dlc:
     plot_data = eye_tracking_parameters( dlcdata )
     x_range = np.arange(-5,20)
     x_values = x_range / Aux.imagingsf
-    
+
     fig,ax = init_figure_axes(fig_size=(8*len(plot_names),8))
     for plt_cnt,(name,data) in enumerate(zip(plot_names,plot_data)):
         ax = plt.subplot2grid( (1,len(plot_names)), (0,plt_cnt) )
@@ -275,7 +277,7 @@ if "eye" in datatype and do_dlc:
         mn,sem,n = mean_sem( data_mat, axis=0 )
         line( x_values, mn, sem, line_color="#0000AA", sem_color="#0000AA", shaded=True )
         finish_panel( ax, ylabel=name, xlabel="Time (s)", legend="off", x_minmax=[x_values[0],x_values[-1]], x_margin=0.55, x_axis_margin=0.55, despine=True )
-    finish_figure( filename=os.path.join("I:/Pieter Goltstein/CATlive/_revision/analysis/retinotopyshift/figs",mousename+"-"+filestem+"-example-"+datatype+"-dlc"), wspace=0.6, hspace=0.2 )
+    finish_figure( filename=os.path.join(savefig,mousename+"-"+filestem+"-example-"+datatype+"-dlc"), wspace=0.6, hspace=0.2 )
 
     fig,ax = init_figure_axes(fig_size=(8*len(plot_names),8))
     for plt_cnt,(name,data) in enumerate(zip(plot_names,plot_data)):
@@ -295,7 +297,7 @@ if "eye" in datatype and do_dlc:
         mn,sem,n = mean_sem( data_mat, axis=0 )
         line( x_values, mn, sem, line_color="#0000AA", sem_color="#0000AA", shaded=True )
         finish_panel( ax, ylabel=name, xlabel="Time (s)", legend="off", x_minmax=[x_values[0],x_values[-1]], x_margin=0.55, x_axis_margin=0.55, despine=True )
-    finish_figure( filename=os.path.join("I:/Pieter Goltstein/CATlive/_revision/analysis/retinotopyshift/figs",mousename+"-"+filestem+"-example-"+datatype+"-dlc-outlier"), wspace=0.6, hspace=0.2 )
+    finish_figure( filename=os.path.join(savefig,mousename+"-"+filestem+"-example-"+datatype+"-dlc-outlier"), wspace=0.6, hspace=0.2 )
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 # show 10 frames around stimulus onset for the 10 first trials
@@ -318,7 +320,7 @@ with tqdm(total=n_frames_to_load, desc="Reading/processing", unit="Fr") as bar:
             if fr_cnt == 2:
                 plt.title("on ->", fontsize=8)
             bar.update(1)
-finish_figure( filename=os.path.join("I:/Pieter Goltstein/CATlive/_revision/analysis/retinotopyshift/figs",mousename+"-"+filestem+"-example-"+datatype+"-sync"), wspace=0.1, hspace=0.4 )
+finish_figure( filename=os.path.join(savefig,mousename+"-"+filestem+"-example-"+datatype+"-sync"), wspace=0.1, hspace=0.4 )
 
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
