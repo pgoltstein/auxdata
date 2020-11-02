@@ -186,7 +186,15 @@ class LvdAuxRecorder(object):
         shutter_onset = np.argwhere( np.diff((channeldata > channelthreshold) * 1.0) > 0 ) + 1 # +1 compensates shift introduced by np.diff
         shutter_offset = np.argwhere( np.diff((channeldata > channelthreshold) * 1.0) < 0 ) + 1 # +1 compensates shift introduced by np.diff
 
-        return float(shutter_onset), float(shutter_offset)
+        if len(shutter_onset) > 1:
+            shutter_onset = shutter_onset.ravel()[0]
+            print("  !! Multiple shutter onsets found, taking first one: {} !!".format(shutter_onset))
+
+        if len(shutter_offset) > 1:
+            shutter_offset = shutter_offset.ravel()[0]
+            print("  !! Multiple shutter offsets found, taking first one: {} !!".format(shutter_offset))
+
+        return int(shutter_onset), int(shutter_offset)
 
     def _calculate_darkframes_dataonset(self):
         """ Calculates the onset and offset of the darkframes and the data onset frame """
