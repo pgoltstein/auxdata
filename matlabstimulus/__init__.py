@@ -1,4 +1,4 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from .matlabstimulus import stimulusinfo
+from .matlabstimulus import StimulusData
