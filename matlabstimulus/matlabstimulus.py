@@ -48,7 +48,17 @@ class StimulusData(object):
     # properties
     def __str__(self):
         """ Returns a printable string with summary output """
-        return "StimulusData file {} from {}\n* # of stimuli: {}".format( self._stimfilename, self._datetime, 0 )
+        return "StimulusData file {} from {}\n* Stim. dur={}s, iti={}s".format( self._stimfilename, self._datetime, self.stimulus_duration, self.iti_duration )
+
+    @property
+    def stimulus_duration(self):
+        """ Returns a list with id's of the stimuli """
+        return float(self._matfile['S']['StimulusDuration'][0,0])
+
+    @property
+    def iti_duration(self):
+        """ Returns a list with id's of the stimuli """
+        return float(self._matfile['S']['ITI'][0,0])
 
     @property
     def stimulus(self):
