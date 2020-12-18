@@ -109,7 +109,7 @@ class StimulusData(object):
         return spatialf_id
 
     @property
-    def azimuth(file):
+    def azimuth(self):
         """ Returns a list with azimuth of the stimuli """
         azimuth_list = self._matfile['S']['Azimuth'][0,0].ravel()
         return np.array(
@@ -122,7 +122,7 @@ class StimulusData(object):
         return azimuth_id
 
     @property
-    def elevation(file):
+    def elevation(self):
         """ Returns a list with elevation of the stimuli """
         elevation_list = self._matfile['S']['Elevation'][0,0].ravel()
         return np.array(
