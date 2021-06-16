@@ -4,6 +4,21 @@ Module for loading and processing of auxdata (peripheral signals, triggers, vide
 
 __Modules for reading .lvd, .eye and .vid files__
 
+---
+
+#### Installation
+
+* Option 1
+First clone repo, then install
+```
+git clone https://github.com/pgoltstein/auxdata.git
+cd auxdata
+pip install .
+```
+* Option 2
+
+
+
 _to do_  
 * auxdata.py
 * functionality for load and process aux data

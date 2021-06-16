@@ -43,7 +43,7 @@ print("Aux.stimulus_onsets: n={}".format(Aux.stimulus_onsets.shape[0]))
 # Display channel
 plotrange = [0,100000]
 plt.subplot(111)
-plt.plot(Aux.raw_channel(nr=7)[plotrange[0]:plotrange[1]])
+plt.plot(Aux.raw_channel(nr=7)[plotrange[0]:plotrange[1]]+5)
 plt.plot(Aux._clean_channel("task", 0.4, 0.5)[plotrange[0]:plotrange[1]])
 plt.plot(Aux.raw_channel(nr=8)[plotrange[0]:plotrange[1]])
 # for f in fo:
