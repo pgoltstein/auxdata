@@ -40,12 +40,4 @@ pip install git+https://github.com/pgoltstein/auxdata.git
 
 ---
 
-_to do_  
-* auxdata.py
-* functionality for load and process aux data
-* frame times, stimulus onsets, stim voltage, eye shutters, stimulus shutter, scan onset
-* functionality for loading image frame synced .eye and .vid data
-
----
-
-Version 0.0.1 - April 9, 2020 - Pieter Goltstein
+Version 0.0.2 - June 16, 2021 - Pieter Goltstein
