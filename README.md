@@ -32,7 +32,7 @@ pip install .
 ```
 
 * Option 2  
-Install directly from github  
+Uninstall and re-install directly from github  
 ```
 pip uninstall auxdata
 pip install git+https://github.com/pgoltstein/auxdata.git
