@@ -8,19 +8,37 @@ __Modules for reading .lvd, .eye and .vid files__
 
 #### Installation
 
-* Option 1
-First clone repo, then install
+* Option 1  
+First clone repo, then install  
 ```
 git clone https://github.com/pgoltstein/auxdata.git
 cd auxdata
 pip install .
 ```
-* Option 2
-Install directly from github
+* Option 2  
+Install directly from github  
 ```
-python -m pip install git+https://github.com/pgoltstein/auxdata.git
+pip install git+https://github.com/pgoltstein/auxdata.git
 ```
 
+#### Update
+
+* Option 1  
+Pull latest version of repo, then install  
+```
+cd auxdata
+git pull
+pip install .
+```
+
+* Option 2  
+Install directly from github  
+```
+pip uninstall auxdata
+pip install git+https://github.com/pgoltstein/auxdata.git
+```
+
+---
 
 _to do_  
 * auxdata.py

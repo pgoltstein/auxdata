@@ -4,7 +4,7 @@
 from setuptools import setup
 
 setup(  name='auxdata',
-        version='0.0.1',
+        version='0.0.2',
         description='Module for loading and processing of auxdata (peripheral signals, triggers, videos from triggered cameras), using VIs from the Bonhoeffer-lab',
         url='https://github.com/pgoltstein/auxdata',
         author='Pieter Goltstein',

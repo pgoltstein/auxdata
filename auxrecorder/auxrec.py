@@ -46,7 +46,6 @@ class LvdAuxRecorder(object):
             - nimagingplanes: Number of multilevel planes of imaging stack
         """
         super(LvdAuxRecorder, self).__init__()
-        self._versionnumber = "0.010001"
 
         # Get filename and store inputs
         if filename is None: filename = "*.lvd"
@@ -95,11 +94,6 @@ class LvdAuxRecorder(object):
     def __str__(self):
         """ Returns a printable string with summary output """
         return "AuxData file {} from {}\n* Channel settings: {}\n  {} channels, {} datapoints, samplingfreq={}Hz, max input={}V\n  {} imaging frames, imaging samplingfreq={:0.2f}Hz, #planes={}".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV, len(self._imframes), self.imagingsf, self._nimagingplanes )
-
-    @property
-    def version(self):
-        """ Returns the version number """
-        return self._versionnumber
 
     @property
     def imagingifi(self):
