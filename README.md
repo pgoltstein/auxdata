@@ -16,7 +16,10 @@ cd auxdata
 pip install .
 ```
 * Option 2
-
+Install directly from github
+```
+python -m pip install git+https://github.com/pgoltstein/auxdata.git
+```
 
 
 _to do_  
