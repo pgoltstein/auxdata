@@ -13,8 +13,6 @@ Created on Tue Jan 28, 2020
 import os, glob
 import datetime
 import numpy as np
-from scipy import stats as scistats
-import matplotlib.pyplot as plt
 
 #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 # Classes
@@ -37,7 +35,7 @@ class LvdAuxRecorder(object):
 
     """
 
-    def __init__(self, filepath=".", filename=None, auxsettingsfile=None, nimagingplanes=1):
+    def __init__(self, filepath=".", filename=None, auxsettingsfile=None, nimagingplanes=1, behavior_only=False):
         """ Initializes the class and loads and processes all auxdata
             Inputs:
             - filepath: Path to where the .lvd file is located
@@ -53,6 +51,7 @@ class LvdAuxRecorder(object):
         self._auxfilename = self._auxfile.split(os.path.sep)[-1]
         self._nimagingplanes = nimagingplanes
         self._imagingplane = 0
+        self._behavior_only = behavior_only
 
         # Get settings
         if auxsettingsfile is None:
@@ -85,15 +84,22 @@ class LvdAuxRecorder(object):
             self._auxdata = np.reshape(auxdata,(self._n,self._nchan))
 
         # Process aux channels
-        self._imframes, self._imifi = self._calculate_imaging_frames()
-        self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
-        self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
-
+        if not self._behavior_only:
+            self._imframes, self._imifi = self._calculate_imaging_frames()
+            self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
+            self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
+        else:
+            self._imframes, self._imifi = 0,0
+            self._darkfr_on, self._darkfr_off, self._dataonsetframe = 0,0,0
+            self._shutter_open_fr, self._shutter_closed_fr = 0,0
 
     # properties
     def __str__(self):
         """ Returns a printable string with summary output """
-        return "AuxData file {} from {}\n* Channel settings: {}\n  {} channels, {} datapoints, samplingfreq={}Hz, max input={}V\n  {} imaging frames, imaging samplingfreq={:0.2f}Hz, #planes={}".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV, len(self._imframes), self.imagingsf, self._nimagingplanes )
+        if self._behavior_only:
+            return "AuxData file {} from {}\n* Channel settings: {}\n  {} channels, {} datapoints, samplingfreq={}Hz, max input={}".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV )
+        else:
+            return "AuxData file {} from {}\n* Channel settings: {}\n  {} channels, {} datapoints, samplingfreq={}Hz, max input={}V\n  {} imaging frames, imaging samplingfreq={:0.2f}Hz, #planes={}".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV, len(self._imframes), self.imagingsf, self._nimagingplanes )
 
     @property
     def imagingifi(self):
