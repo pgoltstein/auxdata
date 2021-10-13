@@ -35,7 +35,7 @@ class LvdAuxRecorder(object):
 
     """
 
-    def __init__(self, filepath=".", filename=None, auxsettingsfile=None, nimagingplanes=1, behavior_only=False):
+    def __init__(self, filepath=".", filename=None, auxsettingsfile=None, nimagingplanes=1, behavior_only=False, fUS=False):
         """ Initializes the class and loads and processes all auxdata
             Inputs:
             - filepath: Path to where the .lvd file is located
@@ -52,6 +52,7 @@ class LvdAuxRecorder(object):
         self._nimagingplanes = nimagingplanes
         self._imagingplane = 0
         self._behavior_only = behavior_only
+        self._fUS = fUS
 
         # Get settings
         if auxsettingsfile is None:
@@ -84,9 +85,13 @@ class LvdAuxRecorder(object):
             self._auxdata = np.reshape(auxdata,(self._n,self._nchan))
 
         # Process aux channels
-        if not self._behavior_only:
+        if not self._behavior_only and not self._fUS:
             self._imframes, self._imifi = self._calculate_imaging_frames()
             self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
+            self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
+        if not self._behavior_only and self._fUS:
+            self._imframes, self._imifi = self._calculate_imaging_frames()
+            self._darkfr_on, self._darkfr_off, self._dataonsetframe = 0,0,0
             self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
         else:
             self._imframes, self._imifi = 0,0
@@ -100,6 +105,11 @@ class LvdAuxRecorder(object):
             return "AuxData file {} from {}\n* Channel settings: {}\n  {} channels, {} datapoints, samplingfreq={}Hz, max input={}".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV )
         else:
             return "AuxData file {} from {}\n* Channel settings: {}\n  {} channels, {} datapoints, samplingfreq={}Hz, max input={}V\n  {} imaging frames, imaging samplingfreq={:0.2f}Hz, #planes={}".format( self._auxfilename, self._datetime, self._auxsettingsfile, self._nchan, self._n, self._sf, self._maxV, len(self._imframes), self.imagingsf, self._nimagingplanes )
+
+    @property
+    def name(self):
+        """ Returns the name of the aux file """
+        return self._auxfilename
 
     @property
     def imagingifi(self):
@@ -163,6 +173,51 @@ class LvdAuxRecorder(object):
         return frameonsets_fr.astype(np.int).ravel()
 
     @property
+    def stimulus_offsets(self):
+        """ calculates the imaging frames in which the stimulus onset happened """
+        # Get channel info
+        stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
+        stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
+        channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
+
+        # Threshold the frames
+        channeldata = self._auxdata[:,stim_on_channelnr]
+        channeldata = np.diff((channeldata > channelthreshold) * 1.0) < 0
+
+        # Find the frame onsets
+        frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
+
+        if frameonsets_aux.size == 0:
+            return np.array([])
+
+        # Convert to frames
+        frameonsets_fr = np.zeros_like(frameonsets_aux)
+        for ix in range(len(frameonsets_aux)):
+            frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
+
+        # Return stimulus onset frames
+        return frameonsets_fr.astype(np.int).ravel()
+
+    @property
+    def runningspeed(self):
+        """ calculates the running speed of the animal (per frame) """
+        # Get channel info
+        stim_on_channelnr = self._channelsettings["ball"]["nr"]
+        channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
+
+        # Threshold the frames
+        channeldata = self._auxdata[:,stim_on_channelnr]
+
+        # Convert to frames
+        frameonsets_fr = np.zeros_like(frameonsets_aux)
+        for ix in range(len(frameonsets_aux)):
+            frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
+
+        # Return stimulus onset frames
+        return frameonsets_fr.astype(np.int).ravel()
+
+
+    @property
     def imagingplane(self):
         """ Returns the currently selected image plane (relevant for exact frame timing) """
         return self._imagingplane
@@ -173,8 +228,10 @@ class LvdAuxRecorder(object):
         self._imagingplane = int(imagingplane_nr)
 
     # Methods
-    def raw_channel(self,nr=0):
-        """ returns the raw channel data, by channel number """
+    def raw_channel(self,nr=0,name=None):
+        """ returns the raw channel data, by channel number or name """
+        if name is not None:
+            nr = self._channelsettings[name]["nr"]
         return self._auxdata[:,nr]
 
     # Internal methods
@@ -240,10 +297,17 @@ class LvdAuxRecorder(object):
 
         # Threshold the frames
         channeldata = self._auxdata[:,framecountchannelnr]
-        channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
+        if not self._fUS:
+            channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
+        else:
+            channeldata = np.abs(np.diff((channeldata > channelthreshold) * 1.0)) > 0
 
         # Find the frame onsets
         frameonsets = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
+
+        # Remove first and last detected frame for fUS (are not actual frames)
+        if self._fUS:
+            frameonsets = frameonsets[1:-1]
 
         # Adjust for multilevel (fast piezo) stacks
         if self._nimagingplanes > 1:
