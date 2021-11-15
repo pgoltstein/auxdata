@@ -23,7 +23,7 @@ class StimulusData(object):
     """ Loads and represents .mat stimulus data.
     """
 
-    def __init__(self, filepath=".", filename=None):
+    def __init__(self, filepath=".", filename=None, gonogo=False):
         """ - filepath: Path to where the .mat file is located
             - filename: Optional exact filename
         """
@@ -35,11 +35,12 @@ class StimulusData(object):
         if filename is None: filename = "*StimSettings.mat"
         self._stimfile = glob.glob( os.path.join(filepath,filename) )[0]
         self._stimfilename = self._stimfile.split(os.path.sep)[-1]
+        self.gonogo = gonogo
 
         # Get date and time of the stimfile
         namesplitted = self._stimfilename.split("-")
-        date_split = namesplitted[-3]
-        time_split = namesplitted[-2]
+        date_split = namesplitted[-(len(namesplitted)-1)]
+        time_split = namesplitted[-(len(namesplitted)-2)]
         self._datetime = datetime.datetime( 2000+int(date_split[0:2]), int(date_split[2:4]), int(date_split[4:6]), int(time_split[0:2]), int(time_split[2:4]), int(time_split[4:6]) )
 
         # Load stimulus file
@@ -52,7 +53,7 @@ class StimulusData(object):
 
     @property
     def stimulus_duration(self):
-        """ Returns a list with id's of the stimuli """
+        """ Returns a list with the duration of the stimuli """
         return float(self._matfile['S']['StimulusDuration'][0,0])
 
     @property
@@ -63,13 +64,28 @@ class StimulusData(object):
     @property
     def stimulus(self):
         """ Returns a list with id's of the stimuli """
-        return self._matfile['S']['StimIDs'][0,0].ravel()
+        if self.gonogo:
+            return self._matfile['StimulusId'].ravel()
+        else:
+            return self._matfile['S']['StimIDs'][0,0].ravel()
 
     @property
     def stimulus_ix(self):
         """ Returns a list with 'index' of the stimulus """
         (_,stimulus_ix) = np.unique(self.stimulus,return_inverse=True)
         return stimulus_ix
+
+    @property
+    def category(self):
+        """ Returns a list with id's of the category """
+        if self.gonogo:
+            return self._matfile['CategoryId'].ravel()
+
+    @property
+    def category_ix(self):
+        """ Returns a list with 'index' of the category """
+        (_,category_ix) = np.unique(self.category,return_inverse=True)
+        return category_ix
 
     @property
     def eye(self):
@@ -85,9 +101,16 @@ class StimulusData(object):
     @property
     def direction(self):
         """ Returns a list with directions of the stimuli """
-        direction_list = self._matfile['S']['Angles'][0,0].ravel()
-        return np.array(
-            [direction_list[s_ix] for s_ix in self.stimulus_ix])
+        if self.gonogo:
+            print()
+            direction_list = [self._matfile['S']['Cat1'][0,0]['Angles'][0,0].ravel(), self._matfile['S']['Cat2'][0,0]['Angles'][0,0].ravel()]
+            return np.array(
+                [direction_list[c][s] for c,s in zip(self.category_ix,self.stimulus_ix)] )
+
+        else:
+            direction_list = self._matfile['S']['Angles'][0,0].ravel()
+            return np.array(
+                [direction_list[s_ix] for s_ix in self.stimulus_ix])
 
     @property
     def direction_id(self):
@@ -98,9 +121,15 @@ class StimulusData(object):
     @property
     def spatialf(self):
         """ Returns a list with spatial frequencies of the stimuli """
-        spatialf_list = self._matfile['S']['spatialF'][0,0].ravel()
-        return np.array(
-            [spatialf_list[s_ix] for s_ix in self.stimulus_ix])
+        if self.gonogo:
+            spatialf_list = [self._matfile['S']['Cat1'][0,0]['spatialF'][0,0].ravel(), self._matfile['S']['Cat2'][0,0]['spatialF'][0,0].ravel()]
+            return np.array(
+                [spatialf_list[c][s] for c,s in zip(self.category_ix,self.stimulus_ix)] )
+
+        else:
+            spatialf_list = self._matfile['S']['spatialF'][0,0].ravel()
+            return np.array(
+                [spatialf_list[s_ix] for s_ix in self.stimulus_ix])
 
     @property
     def spatialf_id(self):

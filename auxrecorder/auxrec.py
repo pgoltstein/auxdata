@@ -147,56 +147,78 @@ class LvdAuxRecorder(object):
         return self._dataonsetframe
 
     @property
+    def rightreward(self):
+        """ calculates the imaging frame for each right reward """
+        return self._process_channel_to_frames("rightreward", "on")
+
+    @property
+    def leftreward(self):
+        """ calculates the imaging frame for each left reward """
+        return self._process_channel_to_frames("leftreward", "on")
+
+    @property
+    def rightlicks(self):
+        """ calculates the imaging frame for each right lick """
+        return self._process_channel_to_frames("rightlick", "off")
+
+    @property
+    def leftlicks(self):
+        """ calculates the imaging frame for each left lick """
+        return self._process_channel_to_frames("leftlick", "off")
+
+    @property
     def stimulus_onsets(self):
         """ calculates the imaging frames in which the stimulus onset happened """
-        # Get channel info
-        stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
-        stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
-        channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
-
-        # Threshold the frames
-        channeldata = self._auxdata[:,stim_on_channelnr]
-        channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
-
-        # Find the frame onsets
-        frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
-
-        if frameonsets_aux.size == 0:
-            return np.array([])
-
-        # Convert to frames
-        frameonsets_fr = np.zeros_like(frameonsets_aux)
-        for ix in range(len(frameonsets_aux)):
-            frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
-
-        # Return stimulus onset frames
-        return frameonsets_fr.astype(np.int).ravel()
+        return self._process_channel_to_frames("stimulusonset", "on")
+        # # Get channel info
+        # stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
+        # stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
+        # channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
+        #
+        # # Threshold the frames
+        # channeldata = self._auxdata[:,stim_on_channelnr]
+        # channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
+        #
+        # # Find the frame onsets
+        # frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
+        #
+        # if frameonsets_aux.size == 0:
+        #     return np.array([])
+        #
+        # # Convert to frames
+        # frameonsets_fr = np.zeros_like(frameonsets_aux)
+        # for ix in range(len(frameonsets_aux)):
+        #     frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
+        #
+        # # Return stimulus onset frames
+        # return frameonsets_fr.astype(np.int).ravel()
 
     @property
     def stimulus_offsets(self):
         """ calculates the imaging frames in which the stimulus onset happened """
-        # Get channel info
-        stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
-        stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
-        channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
-
-        # Threshold the frames
-        channeldata = self._auxdata[:,stim_on_channelnr]
-        channeldata = np.diff((channeldata > channelthreshold) * 1.0) < 0
-
-        # Find the frame onsets
-        frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
-
-        if frameonsets_aux.size == 0:
-            return np.array([])
-
-        # Convert to frames
-        frameonsets_fr = np.zeros_like(frameonsets_aux)
-        for ix in range(len(frameonsets_aux)):
-            frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
-
-        # Return stimulus onset frames
-        return frameonsets_fr.astype(np.int).ravel()
+        return self._process_channel_to_frames("stimulusonset", "off")
+        # # Get channel info
+        # stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
+        # stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
+        # channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
+        #
+        # # Threshold the frames
+        # channeldata = self._auxdata[:,stim_on_channelnr]
+        # channeldata = np.diff((channeldata > channelthreshold) * 1.0) < 0
+        #
+        # # Find the frame onsets
+        # frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
+        #
+        # if frameonsets_aux.size == 0:
+        #     return np.array([])
+        #
+        # # Convert to frames
+        # frameonsets_fr = np.zeros_like(frameonsets_aux)
+        # for ix in range(len(frameonsets_aux)):
+        #     frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
+        #
+        # # Return stimulus onset frames
+        # return frameonsets_fr.astype(np.int).ravel()
 
     @property
     def runningspeed(self):
@@ -233,6 +255,32 @@ class LvdAuxRecorder(object):
         if name is not None:
             nr = self._channelsettings[name]["nr"]
         return self._auxdata[:,nr]
+
+    def _process_channel_to_frames(self, eventname, onoff="on"):
+        """ calculates the imaging frame for each event """
+
+        # Get channel info
+        event_channelname = self._processingsettings[eventname]["channel"]
+        event_channelnr = self._channelsettings[event_channelname]["nr"]
+        channelthreshold = self._processingsettings[eventname]["threshold"]
+
+        # Threshold the channel
+        channeldata = self._auxdata[:,event_channelnr]
+        if onoff == "on":
+            channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
+        elif onoff == "off":
+            channeldata = np.diff((channeldata > channelthreshold) * 1.0) < 0
+
+        # Find the event onsets
+        event_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
+
+        # Convert aux indices to frames
+        event_fr = np.zeros_like(event_aux)
+        for ix in range(len(event_aux)):
+            event_fr[ix] = np.argmin( np.abs(self._imframes - event_aux[ix]) )
+
+        # Return event frames
+        return event_fr.astype(np.int).ravel()
 
     # Internal methods
     def _calculate_shutter_onset_offset_fr(self):
