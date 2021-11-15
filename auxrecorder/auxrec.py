@@ -89,7 +89,7 @@ class LvdAuxRecorder(object):
             self._imframes, self._imifi = self._calculate_imaging_frames()
             self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
             self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
-        if not self._behavior_only and self._fUS:
+        elif not self._behavior_only and self._fUS:
             self._imframes, self._imifi = self._calculate_imaging_frames()
             self._darkfr_on, self._darkfr_off, self._dataonsetframe = 0,0,0
             self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
