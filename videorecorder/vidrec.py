@@ -106,7 +106,7 @@ class EyeRecording(object):
                 for fr_nr,fr_ix in enumerate(frame_ixs):
                     f.seek(fr_ix)
                     timestamps[fr_nr] = np.fromfile(f, dtype='>f8', count=1)
-                    
+
         # Occasionally there is a glitch in the first timestamp, fix this by taking the second timestamp and subtracting the IFI from it
         if timestamps[0] > timestamps[1]:
             print("!!! Warning: Detected glitch in timestamps, attempted to fix, but check if data makes sense !!!")
@@ -117,7 +117,7 @@ class EyeRecording(object):
             if timestamps[0] < 0:
                 print("Timestamp 0 ended up below 0, corrected to exactly 0")
                 timestamps[0] = 0
-                
+
         return timestamps
 
     # Internal function to load the movie data using slicing
@@ -253,9 +253,9 @@ class VidRecording(object):
             if timestamps[0] < 0:
                 print("Timestamp 0 ended up below 0, corrected to exactly 0")
                 timestamps[0] = 0
-                
+
         return timestamps
-        
+
     # Internal function to load the movie data using slicing
     def __getitem__(self, indices):
         """ Loads and returns the .vid movie data directly from disk """

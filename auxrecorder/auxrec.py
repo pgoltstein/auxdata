@@ -354,6 +354,7 @@ class LvdAuxRecorder(object):
         frameonsets = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
 
         # Remove first and last detected frame for fUS (are not actual frames)
+        # The fUS setup starts with the trigger to go "on", then at frame 0 it turns "off", and then the next frame "on", etc.
         if self._fUS:
             frameonsets = frameonsets[1:-1]
 

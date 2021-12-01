@@ -47,13 +47,13 @@ Vid = vidrec.VidRecording(args.filepath, filename=None, verbose=True)
 print(Vid)
 
 timestamps1 = Eye1.timestamps
-print(timestamps1[0])
-print(timestamps1[1])
+for i in range(10):
+    print(timestamps1[i])
 print(timestamps1[-1]-timestamps1[0])
 plt.plot(timestamps1-timestamps1[0])
 timestamps2 = Vid.timestamps
-print(timestamps2[0])
-print(timestamps2[1])
+for i in range(10):
+    print(timestamps2[i])
 print(timestamps2[-1]-timestamps2[0])
 plt.plot(timestamps2-timestamps2[0])
 plt.show()
