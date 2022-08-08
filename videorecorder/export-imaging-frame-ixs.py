@@ -32,7 +32,7 @@ parser.add_argument('filepath', type=str, help= 'path to the folder holding the 
 parser.add_argument('-f', '--filestem', type=str, default="", help='filestem for selecting matching aux, lvd and eye files')
 parser.add_argument('-o', '--overwrite',  action="store_true", default=False, help='Enables to overwrite existing files')
 parser.add_argument('-m', '--matlab',  action="store_true", default=False, help='Stores data as .mat file')
-parser.add_argument('-f', '--fus',  action="store_true", default=False, help='Imaging triggers from functional ultrasound imaging setup (as opposed to two-photon imaging setup)')
+parser.add_argument('-u', '--fus',  action="store_true", default=False, help='Imaging triggers from functional ultrasound imaging setup (as opposed to two-photon imaging setup)')
 parser.add_argument('-n', '--nimagingplanes',  type=int, help='Number of imaging planes acquired in fast z-stack (default=1)', default=1)
 args = parser.parse_args()
 
