@@ -29,6 +29,7 @@ import argparse
 
 parser = argparse.ArgumentParser( description = "This script finds aux, eye and vid movies in the supplied directory, gets the movie timestamps and imaging frame timestamps, and stores a numpy or matlab file that holds the nearest video-index for each imaging frame.\n (written by Pieter Goltstein - August 2020)")
 parser.add_argument('filepath', type=str, help= 'path to the folder holding the .lvd, .vid, .eye1 and .eye2 files')
+parser.add_argument('settingsfile', type=str, help= 'path to the folder holding the aux-settings file')
 parser.add_argument('-f', '--filestem', type=str, default="", help='filestem for selecting matching aux, lvd and eye files')
 parser.add_argument('-o', '--overwrite',  action="store_true", default=False, help='Enables to overwrite existing files')
 parser.add_argument('-m', '--matlab',  action="store_true", default=False, help='Stores data as .mat file')
@@ -131,7 +132,7 @@ print("\n--- calculating frame indices for eye and vid movies ---\nBase path:{}"
 
 # Load Aux data
 auxfilestem = "*"+filestem+"*.lvd"
-Aux = auxrec.LvdAuxRecorder(args.filepath, filename=auxfilestem, nimagingplanes=n_imaging_planes, fUS=fusimaging)
+Aux = auxrec.LvdAuxRecorder(args.filepath, filename=auxfilestem, auxsettingsfile=args.settingsfile, nimagingplanes=n_imaging_planes, fUS=fusimaging)
 print(Aux)
 
 # Get timestamps (in seconds) for frame onsets
