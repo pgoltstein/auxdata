@@ -10,7 +10,7 @@ setup(  name='auxdata',
         author='Pieter Goltstein',
         author_email='xpieter@mac.com',
         license='GNU GENERAL PUBLIC LICENSE Version 3',
-        packages=['auxrecorder'],
+        packages=['auxrecorder','videorecorder'],
         install_requires=['numpy','tqdm'],
         zip_safe=False
         )
