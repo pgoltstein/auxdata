@@ -41,7 +41,7 @@ class StimulusData(object):
         namesplitted = self._stimfilename.split("-")
         date_split = namesplitted[-(len(namesplitted)-1)]
         time_split = namesplitted[-(len(namesplitted)-2)]
-        self._datetime = datetime.datetime( 2000+int(date_split[0:2]), int(date_split[2:4]), int(date_split[4:6]), int(time_split[0:2]), int(time_split[2:4]), int(time_split[4:6]) )
+        self._datetime = datetime.datetime( 2000+int(date_split[0:2]), int(date_split[2:4]), int(date_split[4:6]), int(time_split[0:2]), int(time_split[2:4]), np.min([int(time_split[4:6]),59]) )
 
         # Load stimulus file
         self._matfile = loadmat(self._stimfile)
@@ -53,12 +53,17 @@ class StimulusData(object):
 
     @property
     def stimulus_duration(self):
-        """ Returns a list with the duration of the stimuli """
+        """ Returns the preset duration of the stimuli """
         return float(self._matfile['S']['StimulusDuration'][0,0])
 
     @property
+    def responsewindow_duration(self):
+        """ Returns the preset duration of the stimuli """
+        return float(self._matfile['S']['ResponseWindowTime'][0,0])
+
+    @property
     def iti_duration(self):
-        """ Returns a list with id's of the stimuli """
+        """ Returns the preset duration of the ITI """
         return float(self._matfile['S']['ITI'][0,0])
 
     @property
@@ -76,14 +81,26 @@ class StimulusData(object):
         return stimulus_ix
 
     @property
+    def response(self):
+        """ Returns a list with id's of the responses, 1=go, 0=nogo """
+        if self.gonogo:
+            return self._matfile['MousesResponse'].ravel()
+
+    @property
+    def outcome(self):
+        """ Returns a list with id's of the outcome, 1=correct, 2=incorrect """
+        if self.gonogo:
+            return self._matfile['Outcome'].ravel()
+
+    @property
     def category(self):
-        """ Returns a list with id's of the category """
+        """ Returns a list with id's of the category, 2=go, 1=nogo"""
         if self.gonogo:
             return self._matfile['CategoryId'].ravel()
 
     @property
     def category_ix(self):
-        """ Returns a list with 'index' of the category """
+        """ Returns a list with 'index' of the category, 2=go, 1=nogo """
         (_,category_ix) = np.unique(self.category,return_inverse=True)
         return category_ix
 

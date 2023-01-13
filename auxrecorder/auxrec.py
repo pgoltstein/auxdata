@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Script to load aux-files from two-photon setups (.lvd, .eye and .vid)
+Script to load aux-files from two-photon, fUSI and behavior setups (.lvd, .eye and .vid)
 
 Created on Tue Jan 28, 2020
 
@@ -14,7 +14,17 @@ import os, glob
 import datetime
 import numpy as np
 
-#<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Supporting functions
+
+def smooth(y, box_pts):
+    box = np.ones(box_pts)/box_pts
+    y_smooth = np.convolve(y, box, mode='same')
+    return y_smooth
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Classes
 
 class LvdAuxRecorder(object):
@@ -35,7 +45,7 @@ class LvdAuxRecorder(object):
 
     """
 
-    def __init__(self, filepath=".", filename=None, auxsettingsfile=None, nimagingplanes=1, behavior_only=False, fUS=False):
+    def __init__(self, filepath=".", filename=None, auxsettingsfile=None, nimagingplanes=1, behavior_only=False, fUSI=False):
         """ Initializes the class and loads and processes all auxdata
             Inputs:
             - filepath: Path to where the .lvd file is located
@@ -52,7 +62,7 @@ class LvdAuxRecorder(object):
         self._nimagingplanes = nimagingplanes
         self._imagingplane = 0
         self._behavior_only = behavior_only
-        self._fUS = fUS
+        self._fUSI = fUSI
 
         # Get settings
         if auxsettingsfile is None:
@@ -85,11 +95,11 @@ class LvdAuxRecorder(object):
             self._auxdata = np.reshape(auxdata,(self._n,self._nchan))
 
         # Process aux channels
-        if not self._behavior_only and not self._fUS:
+        if not self._behavior_only and not self._fUSI:
             self._imframes, self._imifi = self._calculate_imaging_frames()
             self._darkfr_on, self._darkfr_off, self._dataonsetframe = self._calculate_darkframes_dataonset()
             self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
-        elif not self._behavior_only and self._fUS:
+        elif not self._behavior_only and self._fUSI:
             self._imframes, self._imifi = self._calculate_imaging_frames()
             self._darkfr_on, self._darkfr_off, self._dataonsetframe = 0,0,0
             self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
@@ -170,73 +180,76 @@ class LvdAuxRecorder(object):
     def stimulus_onsets(self):
         """ calculates the imaging frames in which the stimulus onset happened """
         return self._process_channel_to_frames("stimulusonset", "on")
-        # # Get channel info
-        # stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
-        # stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
-        # channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
-        #
-        # # Threshold the frames
-        # channeldata = self._auxdata[:,stim_on_channelnr]
-        # channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
-        #
-        # # Find the frame onsets
-        # frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
-        #
-        # if frameonsets_aux.size == 0:
-        #     return np.array([])
-        #
-        # # Convert to frames
-        # frameonsets_fr = np.zeros_like(frameonsets_aux)
-        # for ix in range(len(frameonsets_aux)):
-        #     frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
-        #
-        # # Return stimulus onset frames
-        # return frameonsets_fr.astype(np.int).ravel()
 
     @property
     def stimulus_offsets(self):
         """ calculates the imaging frames in which the stimulus onset happened """
         return self._process_channel_to_frames("stimulusonset", "off")
-        # # Get channel info
-        # stim_on_channelname = self._processingsettings["stimulusonset"]["channel"]
-        # stim_on_channelnr = self._channelsettings[stim_on_channelname]["nr"]
-        # channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
-        #
-        # # Threshold the frames
-        # channeldata = self._auxdata[:,stim_on_channelnr]
-        # channeldata = np.diff((channeldata > channelthreshold) * 1.0) < 0
-        #
-        # # Find the frame onsets
-        # frameonsets_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
-        #
-        # if frameonsets_aux.size == 0:
-        #     return np.array([])
-        #
-        # # Convert to frames
-        # frameonsets_fr = np.zeros_like(frameonsets_aux)
-        # for ix in range(len(frameonsets_aux)):
-        #     frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
-        #
-        # # Return stimulus onset frames
-        # return frameonsets_fr.astype(np.int).ravel()
+
+    @property
+    def responsewindow_onsets(self):
+        """ calculates the imaging frames in which the response window onset happened """
+        return self._process_channel_to_frames("responsewindowonset", "on")
+
+    @property
+    def responsewindow_offsets(self):
+        """ calculates the imaging frames in which the response window closed (either by timing out, or by a response lick) """
+        return self._process_channel_to_frames("responsewindowonset", "off")
+
+    @property
+    def rawposition(self):
+        """ Returns the raw position data of the ball
+        """
+        # Get channel info
+        channelnr = self._channelsettings["ball"]["nr"]
+
+        # Get the position data and derivative
+        return self._auxdata[:,channelnr]
+
+    @property
+    def position(self):
+        """ Returns the cleaned up position data of the ball
+        """
+        # Get channel info
+        channelnr = self._channelsettings["ball"]["nr"]
+
+        # Get the position data and derivative
+        position = self._auxdata[:,channelnr]
+        posdiff = np.diff(position)
+
+        # Find and remove the up and down flips
+        flips = np.argwhere(np.abs(posdiff)>2).ravel()
+        for f in flips:
+            lastposdiff = position[f]-position[f+1]
+            position[(f+1):] = position[(f+1):] + lastposdiff
+
+        # Return data
+        return position
 
     @property
     def runningspeed(self):
-        """ calculates the running speed of the animal (per frame) """
-        # Get channel info
-        stim_on_channelnr = self._channelsettings["ball"]["nr"]
-        channelthreshold = self._processingsettings["stimulusonset"]["threshold"]
+        """ calculates the running speed of the animal (per frame)
 
-        # Threshold the frames
-        channeldata = self._auxdata[:,stim_on_channelnr]
+
+            This function is not working, just some randomly copied code to start from -> finish it!
+        """
+        # Get the derivative of the position data
+        speed = np.diff(self.position)
+
+        # smooth by 100 ms
+        speed = smooth(speed, int(self._sf/10))
+
+        # Multiply by sampling freq to result in V/s
+        speed = speed * self._sf
 
         # Convert to frames
-        frameonsets_fr = np.zeros_like(frameonsets_aux)
-        for ix in range(len(frameonsets_aux)):
-            frameonsets_fr[ix] = np.argmin( np.abs(self._imframes - frameonsets_aux[ix]) )
+        frameonsets_speed = np.zeros_like( self._imframes )
+        frame_gap_aux = np.floor( np.mean( self._imframes[1:] - self._imframes[:-1] ) ).astype(int)
+        for ix in range(len(self._imframes)):
+            frameonsets_speed[ix] = np.mean( speed[int(self._imframes[ix]):int(self._imframes[ix]+frame_gap_aux)] )
 
         # Return stimulus onset frames
-        return frameonsets_fr.astype(np.int).ravel()
+        return frameonsets_speed.astype(np.int).ravel()
 
 
     @property
@@ -345,7 +358,7 @@ class LvdAuxRecorder(object):
 
         # Threshold the frames
         channeldata = self._auxdata[:,framecountchannelnr]
-        if not self._fUS:
+        if not self._fUSI:
             channeldata = np.diff((channeldata > channelthreshold) * 1.0) > 0
         else:
             channeldata = np.abs(np.diff((channeldata > channelthreshold) * 1.0)) > 0
@@ -353,9 +366,9 @@ class LvdAuxRecorder(object):
         # Find the frame onsets
         frameonsets = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
 
-        # Remove first and last detected frame for fUS (are not actual frames)
-        # The fUS setup starts with the trigger to go "on", then at frame 0 it turns "off", and then the next frame "on", etc.
-        if self._fUS:
+        # Remove first and last detected frame for fUSI (are not actual frames)
+        # The fUSI setup starts with the trigger to go "on", then at frame 0 it turns "off", and then the next frame "on", etc.
+        if self._fUSI:
             frameonsets = frameonsets[1:-1]
 
         # Adjust for multilevel (fast piezo) stacks

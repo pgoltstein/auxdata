@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Other
+videorecorder/test-vid-aux-frame-sync.py
+
 # Distribution / packaging
 .Python
 build/
