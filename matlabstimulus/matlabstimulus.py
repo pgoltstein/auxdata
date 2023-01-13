@@ -167,7 +167,7 @@ class StimulusData(object):
     def eye(self):
         """ Returns a list with eye-id's of the stimuli """
         if self.task:
-            return None:
+            return None
         else:
             return self._matfile['S']['EyeIDs'][0,0].ravel()
 
@@ -175,7 +175,7 @@ class StimulusData(object):
     def eye_ix(self):
         """ Returns a list with 'index' of the eye """
         if self.task:
-            return None:
+            return None
         else:
             (_,eye_ix) = np.unique(self.eye,return_inverse=True)
             return eye_ix
