@@ -270,7 +270,7 @@ class LvdAuxRecorder(object):
         speed = speed * self._sf
 
         # Convert to frames
-        frameonsets_speed = np.zeros_like( self._imframes )
+        frameonsets_speed = np.zeros_like( self._imframes ).astype(float)
         frame_gap_aux = np.floor( np.mean( self._imframes[1:] - self._imframes[:-1] ) ).astype(int)
         for ix in range(len(self._imframes)):
             frameonsets_speed[ix] = np.mean( speed[int(self._imframes[ix]):int(self._imframes[ix]+frame_gap_aux)] )
