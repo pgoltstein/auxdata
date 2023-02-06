@@ -194,7 +194,34 @@ class LvdAuxRecorder(object):
     @property
     def responsewindow_offsets(self):
         """ calculates the imaging frames in which the response window closed (either by timing out, or by a response lick) """
-        return self._process_channel_to_frames("responsewindowonset", "off")
+        responsewindow_on = self._process_channel_to_frames("responsewindowonset", "on")
+        responsewindow_off = self._process_channel_to_frames("responsewindowonset", "off")
+        timeout_on = self._process_channel_to_frames("timeoutonset", "on")
+        for tr_nr,(rw_on,rw_off) in enumerate(zip(responsewindow_on,responsewindow_off)):
+            timeout_in_resp_win = np.logical_and(timeout_on>=rw_on, timeout_on<=rw_off)
+            if np.nansum( timeout_in_resp_win ) > 0:
+                responsewindow_off[tr_nr] = timeout_on[timeout_in_resp_win]
+        return responsewindow_off
+
+    @property
+    def waitfornolick_onsets(self):
+        """ calculates the imaging frames in which the waitfornolick window onset happened """
+        return self._process_channel_to_frames("waitfornolick", "on")
+
+    @property
+    def waitfornolick_offsets(self):
+        """ returns the imaging frames in which the waitfornolick window closed (stimulus onset) """
+        return self.stimulus_onsets
+
+    @property
+    def timeout_onsets(self):
+        """ calculates the imaging frames in which the timeout started """
+        return self._process_channel_to_frames("timeoutonset", "on")
+
+    @property
+    def timeout_offsets(self):
+        """ calculates the imaging frames in which the timeout ended """
+        return self._process_channel_to_frames("timeoutonset", "off")
 
     @property
     def rawposition(self):
@@ -268,6 +295,12 @@ class LvdAuxRecorder(object):
         if name is not None:
             nr = self._channelsettings[name]["nr"]
         return self._auxdata[:,nr]
+
+    def channel(self,nr=0,name=None):
+        """ returns the raw channel data, by channel number or name """
+        if name is not None:
+            nr = self._channelsettings[name]["nr"]
+        return self._auxdata[self.imagingframes[0,0]:,nr]
 
     def _process_channel_to_frames(self, eventname, onoff="on"):
         """ calculates the imaging frame for each event """
