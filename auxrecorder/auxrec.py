@@ -241,7 +241,7 @@ class LvdAuxRecorder(object):
         channelnr = self._channelsettings["ball"]["nr"]
 
         # Get the position data and derivative
-        position = self._auxdata[:,channelnr]
+        position = np.array(self._auxdata[:,channelnr])
         posdiff = np.diff(position)
 
         # Find and remove the up and down flips
@@ -276,7 +276,7 @@ class LvdAuxRecorder(object):
             frameonsets_speed[ix] = np.mean( speed[int(self._imframes[ix]):int(self._imframes[ix]+frame_gap_aux)] )
 
         # Return stimulus onset frames
-        return frameonsets_speed.astype(np.int).ravel()
+        return frameonsets_speed.ravel()
 
 
     @property
