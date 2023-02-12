@@ -42,9 +42,11 @@ class StimulusData(object):
 
         # Get date and time of the stimfile
         namesplitted = self._stimfilename.split("-")
+        name_split = namesplitted[0]
         date_split = namesplitted[-(len(namesplitted)-1)]
         time_split = namesplitted[-(len(namesplitted)-2)]
         self._datetime = datetime.datetime( 2000+int(date_split[0:2]), int(date_split[2:4]), int(date_split[4:6]), int(time_split[0:2]), int(time_split[2:4]), np.min([int(time_split[4:6]),59]) )
+        self._mousename = name_split
 
         # Load stimulus file
         self._matfile = loadmat(self._stimfile)
@@ -78,6 +80,11 @@ class StimulusData(object):
     def datetime(self):
         """ Returns date and time """
         return self._datetime
+
+    @property
+    def mousename(self):
+        """ Returns the name of the mouse, from the filename """
+        return self._mousename
 
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
