@@ -362,7 +362,10 @@ class LvdAuxRecorder(object):
         channelvalue = self._processingsettings["darkframes"]["value"]
 
         # Get clean channel signal
-        cleaned_channel = self._clean_channel( darkframeschannelname, channelthreshold, channelresolution )
+        try:
+            cleaned_channel = self._clean_channel( darkframeschannelname, channelthreshold, channelresolution )
+        except:
+            cleaned_channel = self._clean_channel( darkframeschannelname, channelthreshold, channelresolution, add_leading_zero=True )
 
         # Find onset in aux channel
         df_onset = np.argwhere( np.diff((cleaned_channel==channelvalue) * 1.0) > 0 ) + 1 # +1 compensates shift introduced by np.diff
@@ -413,11 +416,14 @@ class LvdAuxRecorder(object):
         ifi = ifi_samples / self._sf
         return frameonsets, ifi
 
-    def _clean_channel(self, channelname, threshold, resolution):
+    def _clean_channel(self, channelname, threshold, resolution, add_leading_zero=False):
         """ cleans up the random electrical noise in channel """
         # Get channel data
         channelnr = self._channelsettings[channelname]["nr"]
         channeldata = self._auxdata[:,channelnr]
+        if add_leading_zero:
+            print("Warning, adding leading zero to aux channel to help detect the first onset")
+            channeldata = np.concatenate( np.array([0,]), channeldata )
 
         # Threshold the channel, find 'events'
         channel_up = np.argwhere(np.diff((channeldata > threshold) * 1.0) > 0)
