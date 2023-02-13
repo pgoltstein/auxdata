@@ -209,6 +209,17 @@ class StimulusData(object):
         return direction_id
 
     @property
+    def orientation(self):
+        """ Returns a list with orientations of the stimuli (on range of 0 to 180 degrees) """
+        return np.mod(self.direction,180)
+
+    @property
+    def orientation_id(self):
+        """ Returns a list with the 'index' of stimulus orientation """
+        (_,orientation_id) = np.unique(self.orientation,return_inverse=True)
+        return orientation_id
+
+    @property
     def spatialf(self):
         """ Returns a list with spatial frequencies of the stimuli """
         if self.task:
