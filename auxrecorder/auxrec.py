@@ -255,10 +255,7 @@ class LvdAuxRecorder(object):
 
     @property
     def runningspeed(self):
-        """ calculates the running speed of the animal (per frame)
-
-
-            This function is not working, just some randomly copied code to start from -> finish it!
+        """ calculates the running speed of the animal (per imaging frame or into 100 ms bins for behavior only)
         """
         # Get the derivative of the position data
         speed = np.diff(self.position)
@@ -269,14 +266,22 @@ class LvdAuxRecorder(object):
         # Multiply by sampling freq to result in V/s
         speed = speed * self._sf
 
-        # Convert to frames
-        frameonsets_speed = np.zeros_like( self._imframes ).astype(float)
-        frame_gap_aux = np.floor( np.mean( self._imframes[1:] - self._imframes[:-1] ) ).astype(int)
-        for ix in range(len(self._imframes)):
-            frameonsets_speed[ix] = np.mean( speed[int(self._imframes[ix]):int(self._imframes[ix]+frame_gap_aux)] )
-
-        # Return stimulus onset frames
-        return frameonsets_speed.ravel()
+        # Convert to frames or bins
+        if self._behavior_only:
+            n_sampl_bin = int(self._sf/10) # number of samples per 100 ms
+            n_bins = np.floor(len(speed) / n_sampl_bin)
+            binned_speed = np.zeros((n_bins,))
+            for b in range(n_bins):
+                start_samp = (b*n_sampl_bin)
+                stop_samp = ((b+1)*n_sampl_bin)
+                binned_speed[b] = np.mean(speed[start_samp:stop_samp])
+            return binned_speed
+        else:
+            frameonsets_speed = np.zeros_like( self._imframes ).astype(float)
+            frame_gap_aux = np.floor( np.mean( self._imframes[1:] - self._imframes[:-1] ) ).astype(int)
+            for ix in range(len(self._imframes)):
+                frameonsets_speed[ix] = np.mean( speed[int(self._imframes[ix]):int(self._imframes[ix]+frame_gap_aux)] )
+            return frameonsets_speed.ravel()
 
 
     @property
