@@ -269,7 +269,7 @@ class LvdAuxRecorder(object):
         # Convert to frames or bins
         if self._behavior_only:
             n_sampl_bin = int(self._sf/10) # number of samples per 100 ms
-            n_bins = np.floor(len(speed) / n_sampl_bin)
+            n_bins = np.floor(len(speed) / n_sampl_bin).astype(int)
             binned_speed = np.zeros((n_bins,))
             for b in range(n_bins):
                 start_samp = (b*n_sampl_bin)
