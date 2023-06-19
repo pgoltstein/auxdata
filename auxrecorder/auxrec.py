@@ -325,10 +325,15 @@ class LvdAuxRecorder(object):
         # Find the event onsets
         event_aux = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
 
-        # Convert aux indices to frames
-        event_fr = np.zeros_like(event_aux)
-        for ix in range(len(event_aux)):
-            event_fr[ix] = np.argmin( np.abs(self._imframes - event_aux[ix]) )
+        # Convert aux indices to milliseconds / frames
+        if self._behavior_only:
+            event_fr = np.zeros_like(event_aux)
+            for ix in range(len(event_aux)):
+                event_fr[ix] = (event_aux[ix]/self._sf)*1000
+        else:
+            event_fr = np.zeros_like(event_aux)
+            for ix in range(len(event_aux)):
+                event_fr[ix] = np.argmin( np.abs(self._imframes - event_aux[ix]) )
 
         # Return event frames
         return event_fr.astype(np.int).ravel()
