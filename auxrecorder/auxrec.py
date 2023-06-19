@@ -104,7 +104,7 @@ class LvdAuxRecorder(object):
             self._darkfr_on, self._darkfr_off, self._dataonsetframe = 0,0,0
             self._shutter_open_fr, self._shutter_closed_fr = self._calculate_shutter_onset_offset_fr()
         else:
-            self._imframes, self._imifi = 0,0
+            self._imframes, self._imifi = 0, 0.01
             self._darkfr_on, self._darkfr_off, self._dataonsetframe = 0,0,0
             self._shutter_open_fr, self._shutter_closed_fr = 0,0
 
@@ -159,44 +159,44 @@ class LvdAuxRecorder(object):
     @property
     def rightreward(self):
         """ calculates the imaging frame for each right reward """
-        return self._process_channel_to_frames("rightreward", "on")
+        return self._process_channel_to_frames_or_ts("rightreward", "on")
 
     @property
     def leftreward(self):
         """ calculates the imaging frame for each left reward """
-        return self._process_channel_to_frames("leftreward", "on")
+        return self._process_channel_to_frames_or_ts("leftreward", "on")
 
     @property
     def rightlicks(self):
         """ calculates the imaging frame for each right lick """
-        return self._process_channel_to_frames("rightlick", "off")
+        return self._process_channel_to_frames_or_ts("rightlick", "off")
 
     @property
     def leftlicks(self):
         """ calculates the imaging frame for each left lick """
-        return self._process_channel_to_frames("leftlick", "off")
+        return self._process_channel_to_frames_or_ts("leftlick", "off")
 
     @property
     def stimulus_onsets(self):
         """ calculates the imaging frames in which the stimulus onset happened """
-        return self._process_channel_to_frames("stimulusonset", "on")
+        return self._process_channel_to_frames_or_ts("stimulusonset", "on")
 
     @property
     def stimulus_offsets(self):
         """ calculates the imaging frames in which the stimulus onset happened """
-        return self._process_channel_to_frames("stimulusonset", "off")
+        return self._process_channel_to_frames_or_ts("stimulusonset", "off")
 
     @property
     def responsewindow_onsets(self):
         """ calculates the imaging frames in which the response window onset happened """
-        return self._process_channel_to_frames("responsewindowonset", "on")
+        return self._process_channel_to_frames_or_ts("responsewindowonset", "on")
 
     @property
     def responsewindow_offsets(self):
         """ calculates the imaging frames in which the response window closed (either by timing out, or by a response lick) """
-        responsewindow_on = self._process_channel_to_frames("responsewindowonset", "on")
-        responsewindow_off = self._process_channel_to_frames("responsewindowonset", "off")
-        timeout_on = self._process_channel_to_frames("timeoutonset", "on")
+        responsewindow_on = self._process_channel_to_frames_or_ts("responsewindowonset", "on")
+        responsewindow_off = self._process_channel_to_frames_or_ts("responsewindowonset", "off")
+        timeout_on = self._process_channel_to_frames_or_ts("timeoutonset", "on")
         for tr_nr,(rw_on,rw_off) in enumerate(zip(responsewindow_on,responsewindow_off)):
             timeout_in_resp_win = np.logical_and(timeout_on>=rw_on, timeout_on<=rw_off)
             if np.nansum( timeout_in_resp_win ) > 0:
@@ -206,7 +206,7 @@ class LvdAuxRecorder(object):
     @property
     def waitfornolick_onsets(self):
         """ calculates the imaging frames in which the waitfornolick window onset happened """
-        return self._process_channel_to_frames("waitfornolick", "on")
+        return self._process_channel_to_frames_or_ts("waitfornolick", "on")
 
     @property
     def waitfornolick_offsets(self):
@@ -216,12 +216,12 @@ class LvdAuxRecorder(object):
     @property
     def timeout_onsets(self):
         """ calculates the imaging frames in which the timeout started """
-        return self._process_channel_to_frames("timeoutonset", "on")
+        return self._process_channel_to_frames_or_ts("timeoutonset", "on")
 
     @property
     def timeout_offsets(self):
         """ calculates the imaging frames in which the timeout ended """
-        return self._process_channel_to_frames("timeoutonset", "off")
+        return self._process_channel_to_frames_or_ts("timeoutonset", "off")
 
     @property
     def rawposition(self):
@@ -268,7 +268,7 @@ class LvdAuxRecorder(object):
 
         # Convert to frames or bins
         if self._behavior_only:
-            n_sampl_bin = int(self._sf/10) # number of samples per 100 ms
+            n_sampl_bin = int(self._sf/100) # number of samples per 100 ms
             n_bins = np.floor(len(speed) / n_sampl_bin).astype(int)
             binned_speed = np.zeros((n_bins,))
             for b in range(n_bins):
@@ -305,10 +305,13 @@ class LvdAuxRecorder(object):
         """ returns the raw channel data, by channel number or name """
         if name is not None:
             nr = self._channelsettings[name]["nr"]
-        return self._auxdata[self.imagingframes[0,0]:,nr]
+        if self._behavior_only:
+            return self._auxdata[:,nr]
+        else:
+            return self._auxdata[self.imagingframes[0,0]:,nr]
 
-    def _process_channel_to_frames(self, eventname, onoff="on"):
-        """ calculates the imaging frame for each event """
+    def _process_channel_to_frames_or_ts(self, eventname, onoff="on"):
+        """ calculates the imaging frame or timestamp (10 ms unit) for each event """
 
         # Get channel info
         event_channelname = self._processingsettings[eventname]["channel"]
@@ -327,16 +330,19 @@ class LvdAuxRecorder(object):
 
         # Convert aux indices to milliseconds / frames
         if self._behavior_only:
-            event_fr = np.zeros_like(event_aux)
+            event_times = np.zeros((len(event_aux),))
             for ix in range(len(event_aux)):
-                event_fr[ix] = (event_aux[ix]/self._sf)*1000
+                event_times[ix] = 100 * (event_aux[ix]/self._sf)
+
+            # Return event times
+            return event_times.ravel()
         else:
             event_fr = np.zeros_like(event_aux)
             for ix in range(len(event_aux)):
                 event_fr[ix] = np.argmin( np.abs(self._imframes - event_aux[ix]) )
 
-        # Return event frames
-        return event_fr.astype(np.int).ravel()
+            # Return event frames
+            return event_fr.astype(np.int).ravel()
 
     # Internal methods
     def _calculate_shutter_onset_offset_fr(self):

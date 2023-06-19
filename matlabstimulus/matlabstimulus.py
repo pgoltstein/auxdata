@@ -134,6 +134,33 @@ class StimulusData(object):
         else:
             return None
 
+    @property
+    def stimulus_on_timestamps(self):
+        """ Returns a list with timestamps of stimulus onsets
+        """
+        if self.task:
+            return self._matfile['StimOnset'].ravel()
+        else:
+            return None
+
+    @property
+    def lick_timestamps(self):
+        """ Returns a list with timestamps of licks
+        """
+        if self.task:
+            return self._matfile['LickTimeStamps'].ravel()
+        else:
+            return None
+
+    @property
+    def lick_directions(self):
+        """ Returns a list with the direction of licks (1=left, 2=right)
+        """
+        if self.task:
+            return self._matfile['LickDirection'].ravel()
+        else:
+            return None
+
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Stimulus identification
