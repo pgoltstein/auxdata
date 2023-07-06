@@ -342,7 +342,7 @@ class LvdAuxRecorder(object):
                 event_fr[ix] = np.argmin( np.abs(self._imframes - event_aux[ix]) )
 
             # Return event frames
-            return event_fr.astype(np.int).ravel()
+            return event_fr.astype(int).ravel()
 
     # Internal methods
     def _calculate_shutter_onset_offset_fr(self):
