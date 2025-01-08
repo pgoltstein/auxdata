@@ -132,7 +132,7 @@ print("\n--- calculating frame indices for eye and vid movies ---\nBase path:{}"
 
 # Load Aux data
 auxfilestem = "*"+filestem+"*.lvd"
-Aux = auxrec.LvdAuxRecorder(args.filepath, filename=auxfilestem, auxsettingsfile=args.settingsfile, nimagingplanes=n_imaging_planes, fUS=fusimaging)
+Aux = auxrec.LvdAuxRecorder(args.filepath, filename=auxfilestem, auxsettingsfile=args.settingsfile, nimagingplanes=n_imaging_planes, fUSI=fusimaging)
 print(Aux)
 
 # Get timestamps (in seconds) for frame onsets
