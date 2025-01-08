@@ -418,9 +418,24 @@ class LvdAuxRecorder(object):
         # Find the frame onsets
         frameonsets = np.argwhere(channeldata) + 1 # +1 compensates shift introduced by np.diff
 
-        # Remove first and last detected frame for fUSI (are not actual frames)
-        # The fUSI setup starts with the trigger to go "on", then at frame 0 it turns "off", and then the next frame "on", etc.
+        # In some conditions, the fUSI setup has more early triggers, in that case, remove those
         if self._fUSI:
+            
+            # Get the inter frame intervals
+            ifis = frameonsets[1:]-frameonsets[:-1]
+
+            # Get the mean ifi from the middle section (so ignoring possible artifacty triggers at start or end)
+            mean_ifi = np.mean(ifis[20:-20])
+
+            # Iteratively remove initial frame onsets with too short ifi's
+            for i in range(100):
+                if ifis[i] < 0.7*mean_ifi:
+                    frameonsets = frameonsets[1:]
+                else:
+                    break
+            
+            # Remove first and last detected frame for fUSI (are not actual frames)
+            # The fUSI setup starts with the trigger to go "on", then at frame 0 it turns "off", and then the next frame "on", etc.
             frameonsets = frameonsets[1:-1]
 
         # Adjust for multilevel (fast piezo) stacks
